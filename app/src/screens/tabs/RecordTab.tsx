@@ -16,7 +16,7 @@ const quickTags = [
 export function RecordTab() {
   const theme = useTheme((s) => s.theme)
   const isDark = theme === 'dark'
-  const { isRecording, recSeconds, setRecording, setRecSeconds, tags, addTag, removeTag } = useSession()
+  const { isRecording, setRecording, setRecSeconds, tags, addTag, removeTag } = useSession()
   const toast = useToast((s) => s.show)
 
   const accent = isDark ? '#00e5a0' : '#00b37e'

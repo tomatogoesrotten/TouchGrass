@@ -17,7 +17,6 @@ export function DomainTab() {
   const textPrimary = isDark ? '#f0f1f4' : '#111318'
   const textSoft = isDark ? '#a0a5b8' : '#5a5f72'
   const textMuted = isDark ? '#5c6178' : '#5a5f72'
-  const accent = isDark ? '#00e5a0' : '#00b37e'
 
   function handleLookup() {
     setTimeout(() => {
