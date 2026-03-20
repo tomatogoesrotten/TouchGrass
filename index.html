@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Field Companion — Client Visit Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@700;800;900&family=Plus+Jakarta+Sans:wght@500;600;700&family=JetBrains+Mono:wght@400;500&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        "bg-dark": "#0a0b0f",
+        "bg-light": "#f8f9fc",
+        "surface-dark": "#121317",
+        "surface-low-dark": "#1a1b20",
+        "surface-mid-dark": "#1f1f24",
+        "surface-high-dark": "#292a2e",
+        "surface-highest-dark": "#343439",
+        "glass-border-dark": "rgba(255,255,255,0.08)",
+        "glass-border-light": "rgba(0,0,0,0.08)",
+        "text-primary-dark": "#f0f1f4",
+        "text-soft-dark": "#a0a5b8",
+        "text-muted-dark": "#5c6178",
+        "text-primary-light": "#111318",
+        "text-soft-light": "#5a5f72",
+        "accent-dark": "#00e5a0",
+        "accent-light": "#00b37e",
+        "danger-dark": "#ff4d6a",
+        "danger-light": "#e5384b",
+        "warn-dark": "#ffb347",
+        "warn-light": "#e68a00",
+        "phase-req-dark": "#00e5a0",
+        "phase-req-light": "#00b37e",
+        "phase-follow-dark": "#a78bfa",
+        "phase-follow-light": "#7c5ccf",
+        "phase-demo-dark": "#fbbf24",
+        "phase-demo-light": "#d99a00",
+        "phase-trouble-dark": "#f87171",
+        "phase-trouble-light": "#dc3545",
+      },
+      fontFamily: {
+        headline: ["Outfit", "sans-serif"],
+        body: ["Plus Jakarta Sans", "sans-serif"],
+        mono: ["JetBrains Mono", "monospace"],
+      },
+      borderRadius: {
+        card: "14px",
+        btn: "10px",
+        pill: "20px",
+        input: "10px",
+        record: "50px",
+      },
+    },
+  },
+};
+</script>
+<style>
+/* ── Mesh Backgrounds ── */
+html.dark body {
+  background-color: #0a0b0f;
+  background-image:
+    radial-gradient(circle at 0% 0%, rgba(0,229,160,0.07) 0%, transparent 50%),
+    radial-gradient(circle at 100% 100%, rgba(167,139,250,0.06) 0%, transparent 50%),
+    radial-gradient(circle at 50% 0%, rgba(251,191,36,0.04) 0%, transparent 40%);
+}
+html:not(.dark) body {
+  background-color: #f8f9fc;
+  background-image:
+    radial-gradient(circle at 0% 0%, rgba(0,179,126,0.07) 0%, transparent 50%),
+    radial-gradient(circle at 100% 100%, rgba(124,92,207,0.06) 0%, transparent 50%),
+    radial-gradient(circle at 50% 0%, rgba(217,154,0,0.04) 0%, transparent 40%);
+}
+body { min-height: 100vh; transition: background-color .3s; }
+
+/* ── Glass ── */
+html.dark .glass { background: rgba(18,21,30,.72); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,.08); }
+html:not(.dark) .glass { background: rgba(255,255,255,.65); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(0,0,0,.08); }
+
+/* ── Glass Card ── */
+html.dark .glass-card { background: rgba(31,31,36,.65); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,.06); }
+html:not(.dark) .glass-card { background: rgba(255,255,255,.65); backdrop-filter: blur(16px); border: 1px solid rgba(0,0,0,.08); }
+
+/* ── Primary Gradient ── */
+html.dark .primary-gradient { background: linear-gradient(45deg, #6effc0, #00e5a0); }
+html:not(.dark) .primary-gradient { background: linear-gradient(45deg, #00b37e, #00e5a0); }
+
+/* ── Material Icons ── */
+.material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+
+/* ── Loading bar animation ── */
+@keyframes loading-slide { 0% { transform: translateX(-100%); } 100% { transform: translateX(300%); } }
+.loading-bar { animation: loading-slide 2s ease-in-out infinite; }
+
+/* ── Toast slide-up ── */
+@keyframes toast-in { 0% { opacity: 0; transform: translate(-50%, 20px); } 100% { opacity: 1; transform: translate(-50%, 0); } }
+@keyframes toast-out { 0% { opacity: 1; transform: translate(-50%, 0); } 100% { opacity: 0; transform: translate(-50%, 20px); } }
+.toast-enter { animation: toast-in .35s ease-out forwards; }
+.toast-exit { animation: toast-out .35s ease-in forwards; }
+
+/* ── Pulse glow ── */
+@keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 12px rgba(0,229,160,.3); } 50% { box-shadow: 0 0 24px rgba(0,229,160,.6); } }
+.record-pulse:hover { animation: pulse-glow 2s infinite; }
+
+/* ── Intelligence Pulse (red dot) ── */
+@keyframes intel-pulse { 0%, 100% { box-shadow: 0 0 6px rgba(255,77,106,.4); } 50% { box-shadow: 0 0 14px rgba(255,77,106,.8); } }
+.intel-pulse { animation: intel-pulse 1.5s infinite; }
+
+/* ── Screen transitions ── */
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* ── Scrollbar styling ── */
+::-webkit-scrollbar { width: 6px; }
+html.dark ::-webkit-scrollbar-track { background: #121317; }
+html.dark ::-webkit-scrollbar-thumb { background: #343439; border-radius: 3px; }
+html:not(.dark) ::-webkit-scrollbar-track { background: #f8f9fc; }
+html:not(.dark) ::-webkit-scrollbar-thumb { background: #d0d3dc; border-radius: 3px; }
+
+/* ── Modal overlay ── */
+.modal-overlay { background: rgba(0,0,0,.55); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+
+/* ── AI Result Box ── */
+html.dark .ai-result { background: rgba(0,229,160,.03); border-left: 3px solid #00e5a0; }
+html:not(.dark) .ai-result { background: rgba(0,179,126,.04); border-left: 3px solid #00b37e; }
+
+/* ── Warn card ── */
+html.dark .warn-card { border-left: 4px solid #ffb347; }
+html:not(.dark) .warn-card { border-left: 4px solid #e68a00; }
+</style>
+</head>
+
+<body class="font-body antialiased selection:bg-[#00e5a0]/20">
+
+<!-- ╔══════════════════════════════════════════════════════════════╗
+     ║  SCREEN 1: DASHBOARD                                        ║
+     ╚══════════════════════════════════════════════════════════════╝ -->
+<div id="screen-dashboard" class="screen active">
+  <!-- Top Bar -->
+  <header class="fixed top-0 w-full z-50 glass flex justify-between items-center px-6 py-4">
+    <div class="flex items-center gap-4">
+      <!-- Logo -->
+      <div class="w-[42px] h-[42px] rounded-lg primary-gradient p-[1px] shadow-[0_0_20px_rgba(0,229,160,0.25)]">
+        <div class="w-full h-full dark:bg-[#121317] bg-white rounded-[7px] flex items-center justify-center">
+          <span class="material-symbols-outlined dark:text-[#00e5a0] text-[#00b37e] text-[24px]" style="font-variation-settings:'FILL' 1;">bolt</span>
+        </div>
+      </div>
+      <div>
+        <h1 class="text-[21px] font-[800] tracking-tight dark:text-[#f0f1f4] text-[#111318] font-headline leading-none">Field Companion</h1>
+        <p class="text-[11.5px] dark:text-[#5c6178] text-[#5a5f72] font-medium mt-0.5 uppercase tracking-wider">Client Visit Intelligence</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-5">
+      <!-- Theme Toggle -->
+      <button onclick="toggleTheme()" class="w-[44px] h-[24px] dark:bg-[#343439] bg-[#e2e7f0] rounded-full relative p-[3px] cursor-pointer transition-colors">
+        <div class="w-[18px] h-[18px] dark:bg-[#00e5a0] bg-[#00b37e] rounded-full flex items-center justify-center shadow-sm transition-transform dark:translate-x-[20px] translate-x-0">
+          <span class="material-symbols-outlined text-[11px] text-white dark:hidden">light_mode</span>
+          <span class="material-symbols-outlined text-[11px] text-[#003824] hidden dark:inline">dark_mode</span>
+        </div>
+      </button>
+      <!-- New Session Button -->
+      <button onclick="showScreen('screen-setup')" class="primary-gradient dark:text-[#003824] text-white px-5 py-2.5 rounded-btn font-bold text-sm flex items-center gap-2 hover:scale-[0.98] transition-transform active:scale-95 shadow-lg dark:shadow-[#00e5a0]/15 shadow-[#00b37e]/15">
+        <span class="material-symbols-outlined text-sm">add</span>
+        New Session
+      </button>
+    </div>
+  </header>
+
+  <main class="pt-28 pb-16 px-6 max-w-7xl mx-auto">
+    <!-- Stats Row -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+      <div class="glass-card p-6 rounded-card">
+        <span class="text-[11px] font-bold uppercase tracking-widest dark:text-[#5c6178] text-[#5a5f72] mb-2 block font-headline">Total Sessions</span>
+        <div class="text-[34px] font-[900] font-headline dark:text-[#f0f1f4] text-[#111318]">1,284</div>
+        <div class="flex items-center gap-2 mt-2">
+          <span class="dark:text-[#00e5a0] text-[#00b37e] text-xs font-mono">+12.5%</span>
+          <span class="dark:text-[#5c6178] text-[#5a5f72] text-[10px] uppercase font-bold tracking-tight">vs last month</span>
+        </div>
+      </div>
+      <div class="glass-card p-6 rounded-card">
+        <span class="text-[11px] font-bold uppercase tracking-widest dark:text-[#5c6178] text-[#5a5f72] mb-2 block font-headline">This Week</span>
+        <div class="text-[34px] font-[900] font-headline dark:text-[#f0f1f4] text-[#111318]">42</div>
+        <div class="flex items-center gap-2 mt-2">
+          <span class="dark:text-[#fbbf24] text-[#d99a00] text-xs font-mono">Trending</span>
+          <span class="material-symbols-outlined dark:text-[#fbbf24] text-[#d99a00] text-sm">trending_up</span>
+        </div>
+      </div>
+      <div class="glass-card p-6 rounded-card">
+        <span class="text-[11px] font-bold uppercase tracking-widest dark:text-[#5c6178] text-[#5a5f72] mb-2 block font-headline">Industries</span>
+        <div class="text-[34px] font-[900] font-headline dark:text-[#f0f1f4] text-[#111318]">18</div>
+        <div class="flex items-center gap-2 mt-2">
+          <span class="dark:text-[#a0a5b8] text-[#5a5f72] text-xs font-mono">Global Coverage</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search & Filters -->
+    <div class="flex flex-col md:flex-row gap-6 mb-8 items-center justify-between">
+      <div class="relative w-full md:w-96 group">
+        <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 dark:text-[#5c6178] text-[#5a5f72] group-focus-within:dark:text-[#00e5a0] group-focus-within:text-[#00b37e] transition-colors">search</span>
+        <input class="w-full dark:bg-[#1a1b20] bg-white border-none rounded-input pl-12 pr-4 py-3 text-sm dark:text-[#f0f1f4] text-[#111318] dark:placeholder:text-[#5c6178]/40 placeholder:text-[#5a5f72]/40 focus:ring-1 dark:focus:ring-[#00e5a0]/40 focus:ring-[#00b37e]/40 transition-all" placeholder="Search sessions or clients..." type="text"/>
+      </div>
+      <div class="flex flex-wrap gap-2 items-center" id="filter-pills">
+        <button class="filter-pill active px-5 py-2 rounded-pill text-xs font-bold transition-colors dark:bg-[#1f1f24] dark:text-[#f0f1f4] bg-[#111318] text-white" data-filter="all">All</button>
+        <button class="filter-pill px-5 py-2 rounded-pill text-xs font-bold transition-colors border dark:border-[#00e5a0]/30 dark:text-[#00e5a0] border-[#00b37e]/30 text-[#00b37e] dark:hover:bg-[#00e5a0]/10 hover:bg-[#00b37e]/5 flex items-center gap-2" data-filter="requirements">
+          <div class="w-1.5 h-1.5 rounded-full dark:bg-[#00e5a0] bg-[#00b37e]"></div> Requirements
+        </button>
+        <button class="filter-pill px-5 py-2 rounded-pill text-xs font-bold transition-colors border dark:border-[#a78bfa]/30 dark:text-[#a78bfa] border-[#7c5ccf]/30 text-[#7c5ccf] dark:hover:bg-[#a78bfa]/10 hover:bg-[#7c5ccf]/5 flex items-center gap-2" data-filter="follow-up">
+          <div class="w-1.5 h-1.5 rounded-full dark:bg-[#a78bfa] bg-[#7c5ccf]"></div> Follow-up
+        </button>
+        <button class="filter-pill px-5 py-2 rounded-pill text-xs font-bold transition-colors border dark:border-[#fbbf24]/30 dark:text-[#fbbf24] border-[#d99a00]/30 text-[#d99a00] dark:hover:bg-[#fbbf24]/10 hover:bg-[#d99a00]/5 flex items-center gap-2" data-filter="demo">
+          <div class="w-1.5 h-1.5 rounded-full dark:bg-[#fbbf24] bg-[#d99a00]"></div> Demo
+        </button>
+        <button class="filter-pill px-5 py-2 rounded-pill text-xs font-bold transition-colors border dark:border-[#f87171]/30 dark:text-[#f87171] border-[#dc3545]/30 text-[#dc3545] dark:hover:bg-[#f87171]/10 hover:bg-[#dc3545]/5 flex items-center gap-2" data-filter="troubleshoot">
+          <div class="w-1.5 h-1.5 rounded-full dark:bg-[#f87171] bg-[#dc3545]"></div> Troubleshoot
+        </button>
+      </div>
+    </div>
+
+    <!-- Session Cards Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="session-grid">
+      <!-- Card 1: Requirements -->
+      <div class="session-card group relative dark:bg-[#1a1b20] bg-white rounded-card overflow-hidden hover:-translate-y-[2px] transition-all duration-300 dark:hover:shadow-[0_20px_40px_rgba(0,0,0,0.25)] hover:shadow-[0_12px_30px_rgba(0,0,0,0.06)] dark:border dark:border-white/5 border border-black/5 cursor-pointer" data-phase="requirements" onclick="showScreen('screen-session')">
+        <div class="h-[3px] w-full dark:bg-[#00e5a0] bg-[#00b37e]"></div>
+        <button class="delete-btn absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 dark:hover:bg-[#ff4d6a]/10 hover:bg-[#e5384b]/10 rounded-lg dark:text-[#ff4d6a] text-[#e5384b]" onclick="event.stopPropagation(); showDeleteModal()">
+          <span class="material-symbols-outlined text-[18px]">close</span>
+        </button>
+        <div class="p-6">
+          <div class="inline-flex items-center px-2 py-0.5 rounded-[6px] dark:bg-[#00e5a0]/10 bg-[#00b37e]/10 dark:text-[#00e5a0] text-[#00b37e] text-[11px] font-bold mb-4">REQUIREMENTS</div>
+          <h3 class="text-[17px] font-[750] font-headline dark:text-[#f0f1f4] text-[#111318] mb-1 dark:group-hover:text-[#00e5a0] group-hover:text-[#00b37e] transition-colors">Aether Dynamics</h3>
+          <p class="text-[13px] dark:text-[#a0a5b8] text-[#5a5f72] font-medium mb-6">Cloud Infrastructure</p>
+          <div class="flex items-center justify-between dark:border-t dark:border-white/5 border-t border-black/5 pt-4">
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-[16px] dark:text-[#5c6178] text-[#5a5f72]">calendar_today</span>
+              <span class="font-mono text-[11.5px] dark:text-[#5c6178] text-[#5a5f72]">2025.10.24</span>
+            </div>
+            <span class="font-mono text-[11.5px] dark:text-[#5c6178] text-[#5a5f72]">14:20</span>
+          </div>
+        </div>
+      </div>
+      <!-- Card 2: Demo -->
+      <div class="session-card group relative dark:bg-[#1a1b20] bg-white rounded-card overflow-hidden hover:-translate-y-[2px] transition-all duration-300 dark:hover:shadow-[0_20px_40px_rgba(0,0,0,0.25)] hover:shadow-[0_12px_30px_rgba(0,0,0,0.06)] dark:border dark:border-white/5 border border-black/5 cursor-pointer" data-phase="demo" onclick="showScreen('screen-session')">
+        <div class="h-[3px] w-full dark:bg-[#fbbf24] bg-[#d99a00]"></div>
+        <button class="delete-btn absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 dark:hover:bg-[#ff4d6a]/10 hover:bg-[#e5384b]/10 rounded-lg dark:text-[#ff4d6a] text-[#e5384b]" onclick="event.stopPropagation(); showDeleteModal()">
+          <span class="material-symbols-outlined text-[18px]">close</span>
+        </button>
+        <div class="p-6">
+          <div class="inline-flex items-center px-2 py-0.5 rounded-[6px] dark:bg-[#fbbf24]/10 bg-[#d99a00]/10 dark:text-[#fbbf24] text-[#d99a00] text-[11px] font-bold mb-4">DEMO</div>
+          <h3 class="text-[17px] font-[750] font-headline dark:text-[#f0f1f4] text-[#111318] mb-1 dark:group-hover:text-[#00e5a0] group-hover:text-[#00b37e] transition-colors">Luminal Systems</h3>
+          <p class="text-[13px] dark:text-[#a0a5b8] text-[#5a5f72] font-medium mb-6">Autonomous Logistics</p>
+          <div class="flex items-center justify-between dark:border-t dark:border-white/5 border-t border-black/5 pt-4">
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-[16px] dark:text-[#5c6178] text-[#5a5f72]">calendar_today</span>
+              <span class="font-mono text-[11.5px] dark:text-[#5c6178] text-[#5a5f72]">2025.10.23</span>
+            </div>
+            <span class="font-mono text-[11.5px] dark:text-[#5c6178] text-[#5a5f72]">09:15</span>
+          </div>
+        </div>
+      </div>
+      <!-- Card 3: Follow-up -->
+      <div class="session-card group relative dark:bg-[#1a1b20] bg-white rounded-card overflow-hidden hover:-translate-y-[2px] transition-all duration-300 dark:hover:shadow-[0_20px_40px_rgba(0,0,0,0.25)] hover:shadow-[0_12px_30px_rgba(0,0,0,0.06)] dark:border dark:border-white/5 border border-black/5 cursor-pointer" data-phase="follow-up" onclick="showScreen('screen-session')">
+        <div class="h-[3px] w-full dark:bg-[#a78bfa] bg-[#7c5ccf]"></div>
+        <button class="delete-btn absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 dark:hover:bg-[#ff4d6a]/10 hover:bg-[#e5384b]/10 rounded-lg dark:text-[#ff4d6a] text-[#e5384b]" onclick="event.stopPropagation(); showDeleteModal()">
+          <span class="material-symbols-outlined text-[18px]">close</span>
+        </button>
+        <div class="p-6">
+          <div class="inline-flex items-center px-2 py-0.5 rounded-[6px] dark:bg-[#a78bfa]/10 bg-[#7c5ccf]/10 dark:text-[#a78bfa] text-[#7c5ccf] text-[11px] font-bold mb-4">FOLLOW-UP</div>
+          <h3 class="text-[17px] font-[750] font-headline dark:text-[#f0f1f4] text-[#111318] mb-1 dark:group-hover:text-[#00e5a0] group-hover:text-[#00b37e] transition-colors">Vertex Global</h3>
+          <p class="text-[13px] dark:text-[#a0a5b8] text-[#5a5f72] font-medium mb-6">Financial Services</p>
+          <div class="flex items-center justify-between dark:border-t dark:border-white/5 border-t border-black/5 pt-4">
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-[16px] dark:text-[#5c6178] text-[#5a5f72]">calendar_today</span>
+              <span class="font-mono text-[11.5px] dark:text-[#5c6178] text-[#5a5f72]">2025.10.22</span>
+            </div>
+            <span class="font-mono text-[11.5px] dark:text-[#5c6178] text-[#5a5f72]">16:45</span>
+          </div>
+        </div>
+      </div>
+      <!-- Card 4: Troubleshoot -->
+      <div class="session-card group relative dark:bg-[#1a1b20] bg-white rounded-card overflow-hidden hover:-translate-y-[2px] transition-all duration-300 dark:hover:shadow-[0_20px_40px_rgba(0,0,0,0.25)] hover:shadow-[0_12px_30px_rgba(0,0,0,0.06)] dark:border dark:border-white/5 border border-black/5 cursor-pointer" data-phase="troubleshoot" onclick="showScreen('screen-session')">
+        <div class="h-[3px] w-full dark:bg-[#f87171] bg-[#dc3545]"></div>
+        <button class="delete-btn absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 dark:hover:bg-[#ff4d6a]/10 hover:bg-[#e5384b]/10 rounded-lg dark:text-[#ff4d6a] text-[#e5384b]" onclick="event.stopPropagation(); showDeleteModal()">
+          <span class="material-symbols-outlined text-[18px]">close</span>
+        </button>
+        <div class="p-6">
+          <div class="inline-flex items-center px-2 py-0.5 rounded-[6px] dark:bg-[#f87171]/10 bg-[#dc3545]/10 dark:text-[#f87171] text-[#dc3545] text-[11px] font-bold mb-4">TROUBLESHOOT</div>
+          <h3 class="text-[17px] font-[750] font-headline dark:text-[#f0f1f4] text-[#111318] mb-1 dark:group-hover:text-[#00e5a0] group-hover:text-[#00b37e] transition-colors">Nexus Data</h3>
+          <p class="text-[13px] dark:text-[#a0a5b8] text-[#5a5f72] font-medium mb-6">Infrastructure</p>
+          <div class="flex items-center justify-between dark:border-t dark:border-white/5 border-t border-black/5 pt-4">
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-[16px] dark:text-[#5c6178] text-[#5a5f72]">calendar_today</span>
+              <span class="font-mono text-[11.5px] dark:text-[#5c6178] text-[#5a5f72]">2025.10.21</span>
+            </div>
+            <span class="font-mono text-[11.5px] dark:text-[#5c6178] text-[#5a5f72]">11:30</span>
+          </div>
+        </div>
+      </div>
+      <!-- Card 5: Requirements -->
+      <div class="session-card group relative dark:bg-[#1a1b20] bg-white rounded-card overflow-hidden hover:-translate-y-[2px] transition-all duration-300 dark:hover:shadow-[0_20px_40px_rgba(0,0,0,0.25)] hover:shadow-[0_12px_30px_rgba(0,0,0,0.06)] dark:border dark:border-white/5 border border-black/5 cursor-pointer" data-phase="requirements" onclick="showScreen('screen-session')">
+        <div class="h-[3px] w-full dark:bg-[#00e5a0] bg-[#00b37e]"></div>
+        <button class="delete-btn absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 dark:hover:bg-[#ff4d6a]/10 hover:bg-[#e5384b]/10 rounded-lg dark:text-[#ff4d6a] text-[#e5384b]" onclick="event.stopPropagation(); showDeleteModal()">
+          <span class="material-symbols-outlined text-[18px]">close</span>
+        </button>
+        <div class="p-6">
+          <div class="inline-flex items-center px-2 py-0.5 rounded-[6px] dark:bg-[#00e5a0]/10 bg-[#00b37e]/10 dark:text-[#00e5a0] text-[#00b37e] text-[11px] font-bold mb-4">REQUIREMENTS</div>
+          <h3 class="text-[17px] font-[750] font-headline dark:text-[#f0f1f4] text-[#111318] mb-1 dark:group-hover:text-[#00e5a0] group-hover:text-[#00b37e] transition-colors">Horizon Fintech</h3>
+          <p class="text-[13px] dark:text-[#a0a5b8] text-[#5a5f72] font-medium mb-6">Banking Solutions</p>
+          <div class="flex items-center justify-between dark:border-t dark:border-white/5 border-t border-black/5 pt-4">
+            <div class="flex items-center gap-2">
+              <span class="material-symbols-outlined text-[16px] dark:text-[#5c6178] text-[#5a5f72]">calendar_today</span>
+              <span class="font-mono text-[11.5px] dark:text-[#5c6178] text-[#5a5f72]">2025.10.19</span>
+            </div>
+            <span class="font-mono text-[11.5px] dark:text-[#5c6178] text-[#5a5f72]">08:00</span>
+          </div>
+        </div>
+      </div>
+      <!-- Empty State -->
+      <div class="relative dark:bg-[#1a1b20]/30 bg-white/30 rounded-card border border-dashed dark:border-white/10 border-black/10 flex flex-col items-center justify-center p-8 min-h-[260px]">
+        <div class="absolute inset-0 dark:bg-[#00e5a0]/5 bg-[#00b37e]/5 rounded-full blur-[60px] pointer-events-none"></div>
+        <span class="text-[52px] mb-4 opacity-40">📋</span>
+        <p class="dark:text-[#f0f1f4] text-[#111318] font-headline font-[800] text-[24px] text-center mb-2">No sessions yet</p>
+        <p class="dark:text-[#5c6178] text-[#5a5f72] text-sm text-center mb-4">Start your first client visit session</p>
+        <button onclick="showScreen('screen-setup')" class="primary-gradient dark:text-[#003824] text-white px-5 py-2.5 rounded-btn font-bold text-sm hover:scale-[0.98] transition-transform">
+          Create Session
+        </button>
+      </div>
+    </div>
+  </main>
+</div>
+
+
+<!-- ╔══════════════════════════════════════════════════════════════╗
+     ║  SCREEN 2: DELETE MODAL (overlay)                            ║
+     ╚══════════════════════════════════════════════════════════════╝ -->
+<div id="delete-modal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4">
+  <div class="modal-overlay fixed inset-0" onclick="hideDeleteModal()"></div>
+  <div class="relative z-10 dark:bg-[#121317] bg-white w-full max-w-[440px] rounded-[18px] p-[30px] shadow-[0_20px_40px_rgba(0,0,0,0.4)] overflow-hidden">
+    <!-- Top accent glow -->
+    <div class="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent dark:via-[#ff4d6a]/30 via-[#e5384b]/30 to-transparent"></div>
+    <div class="flex flex-col gap-6">
+      <!-- Icon -->
+      <div class="dark:bg-[#ff4d6a]/10 bg-[#e5384b]/10 p-3 rounded-card w-fit">
+        <span class="material-symbols-outlined dark:text-[#ff4d6a] text-[#e5384b] text-[28px]">delete_forever</span>
+      </div>
+      <!-- Text -->
+      <div class="space-y-2">
+        <h2 class="font-headline text-[18px] font-[750] dark:text-[#f0f1f4] text-[#111318] tracking-tight">Delete session?</h2>
+        <p class="text-[14px] leading-relaxed dark:text-[#a0a5b8] text-[#5a5f72] font-medium">This action cannot be undone. Are you sure you want to permanently delete this intelligence session?</p>
+      </div>
+      <!-- Session metadata -->
+      <div class="dark:bg-[#0d0e12]/50 bg-[#f1f3f9] rounded-card p-4 flex items-center gap-4">
+        <div class="flex flex-col">
+          <span class="text-[10px] uppercase tracking-widest dark:text-[#a0a5b8] text-[#5a5f72] font-bold">Session ID</span>
+          <span class="font-mono text-[12px] dark:text-[#00e5a0] text-[#00b37e]">FC-9928-XJ</span>
+        </div>
+        <div class="w-px h-8 dark:bg-white/10 bg-black/10"></div>
+        <div class="flex flex-col">
+          <span class="text-[10px] uppercase tracking-widest dark:text-[#a0a5b8] text-[#5a5f72] font-bold">Recorded</span>
+          <span class="font-mono text-[12px] dark:text-[#f0f1f4] text-[#111318]">2025.10.24</span>
+        </div>
+      </div>
+      <!-- Buttons -->
+      <div class="flex flex-col sm:flex-row gap-3 mt-2">
+        <button onclick="hideDeleteModal()" class="flex-1 h-[48px] rounded-btn dark:bg-white/5 bg-[#f1f3f9] dark:hover:bg-white/10 hover:bg-[#e2e7f0] dark:border dark:border-white/10 border border-black/10 transition-all active:scale-95 flex items-center justify-center dark:text-[#f0f1f4] text-[#111318] font-bold text-[14px]">Cancel</button>
+        <button onclick="hideDeleteModal(); showToast('Session deleted successfully')" class="flex-1 h-[48px] rounded-btn dark:bg-[#ff4d6a] bg-[#e5384b] dark:hover:bg-[#ff3355] hover:bg-[#d02f42] transition-all active:scale-95 flex items-center justify-center text-white font-bold text-[14px] shadow-lg dark:shadow-[#ff4d6a]/20 shadow-[#e5384b]/20">Delete</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ╔══════════════════════════════════════════════════════════════╗
+     ║  SCREEN 3: SETUP / NEW SESSION                               ║
+     ╚══════════════════════════════════════════════════════════════╝ -->
+<div id="screen-setup" class="screen">
+  <main class="max-w-[540px] mx-auto px-6 pt-12 pb-24">
+    <!-- Nav -->
+    <header class="flex justify-between items-center mb-10">
+      <a onclick="showScreen('screen-dashboard')" class="flex items-center gap-2 dark:text-[#00e5a0] text-[#00b37e] font-semibold text-sm tracking-wide hover:opacity-80 transition-opacity cursor-pointer">
+        <span class="material-symbols-outlined text-[18px]">arrow_back</span> Dashboard
+      </a>
+      <button onclick="toggleTheme()" class="p-2 rounded-full dark:hover:bg-white/5 hover:bg-black/5 transition-colors">
+        <span class="material-symbols-outlined dark:text-[#f0f1f4] text-[#111318]">
+          <span class="dark:hidden">light_mode</span><span class="hidden dark:inline">dark_mode</span>
+        </span>
+      </button>
+    </header>
+
+    <!-- Title -->
+    <section class="mb-12">
+      <h1 class="font-headline font-black text-[30px] leading-tight dark:text-[#f0f1f4] text-[#111318] tracking-tight font-[900]">New Session</h1>
+      <p class="dark:text-[#a0a5b8] text-[#5a5f72] font-medium mt-2 text-sm">Initialize a new client field engagement.</p>
+    </section>
+
+    <div class="space-y-8">
+      <!-- Form Card -->
+      <div class="glass p-8 rounded-card shadow-2xl">
+        <div class="space-y-6">
+          <!-- Client -->
+          <div class="space-y-2">
+            <label class="block text-[10.5px] font-bold uppercase tracking-widest dark:text-[#a0a5b8] text-[#5a5f72] px-1">Client Name</label>
+            <input id="setup-client" oninput="validateSetup()" class="w-full h-12 dark:bg-[#1a1b20] bg-[#f1f3f9] border-none rounded-input px-4 text-[14.5px] font-medium dark:text-[#f0f1f4] text-[#111318] dark:placeholder:text-[#5c6178]/30 placeholder:text-[#5a5f72]/30 focus:ring-2 dark:focus:ring-[#00e5a0]/40 focus:ring-[#00b37e]/40 transition-all" placeholder="e.g. Meridian Global" type="text"/>
+          </div>
+          <!-- Industry -->
+          <div class="space-y-2">
+            <label class="block text-[10.5px] font-bold uppercase tracking-widest dark:text-[#a0a5b8] text-[#5a5f72] px-1">Industry Sector</label>
+            <select id="setup-industry" onchange="validateSetup()" class="w-full h-12 dark:bg-[#1a1b20] bg-[#f1f3f9] border-none rounded-input px-4 text-[14.5px] font-medium dark:text-[#f0f1f4] text-[#111318] focus:ring-2 dark:focus:ring-[#00e5a0]/40 focus:ring-[#00b37e]/40">
+              <option value="">Select industry...</option>
+              <option>Renewable Energy</option>
+              <option>Cloud Infrastructure</option>
+              <option>Financial Services</option>
+              <option>Autonomous Logistics</option>
+              <option>Healthcare</option>
+            </select>
+          </div>
+          <!-- Attendees -->
+          <div class="space-y-2">
+            <label class="block text-[10.5px] font-bold uppercase tracking-widest dark:text-[#a0a5b8] text-[#5a5f72] px-1">Key Attendees</label>
+            <div class="relative">
+              <input id="setup-attendees" oninput="validateSetup()" class="w-full h-12 dark:bg-[#1a1b20] bg-[#f1f3f9] border-none rounded-input pl-4 pr-12 text-[14.5px] font-medium dark:text-[#f0f1f4] text-[#111318] dark:placeholder:text-[#5c6178]/30 placeholder:text-[#5a5f72]/30 focus:ring-2 dark:focus:ring-[#00e5a0]/40 focus:ring-[#00b37e]/40" placeholder="Add participants..." type="text"/>
+              <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 dark:text-[#5c6178] text-[#5a5f72]">group_add</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phase Selector -->
+      <div class="space-y-4">
+        <label class="block text-[10.5px] font-bold uppercase tracking-widest dark:text-[#a0a5b8] text-[#5a5f72] px-1">Engagement Phase</label>
+        <div class="grid grid-cols-2 gap-4" id="phase-grid">
+          <button class="phase-btn glass p-5 rounded-card text-left relative transition-all ring-1 ring-inset dark:ring-white/5 ring-black/5" data-phase="requirements" onclick="selectPhase(this)">
+            <div class="phase-dot hidden w-[7px] h-[7px] rounded-full dark:bg-[#00e5a0] bg-[#00b37e] absolute top-3 right-3 dark:shadow-[0_0_8px_#00e5a0] shadow-[0_0_8px_#00b37e]"></div>
+            <span class="font-mono text-[10px] dark:text-[#00e5a0] text-[#00b37e] mb-1 block">PHASE 01</span>
+            <div class="font-headline font-bold text-base dark:text-[#f0f1f4] text-[#111318]">Requirements</div>
+            <div class="text-[11px] dark:text-[#a0a5b8] text-[#5a5f72] mt-1 leading-relaxed">Initial assessment and baseline data.</div>
+          </button>
+          <button class="phase-btn glass p-5 rounded-card text-left relative transition-all ring-1 ring-inset dark:ring-white/5 ring-black/5" data-phase="follow-up" onclick="selectPhase(this)">
+            <div class="phase-dot hidden w-[7px] h-[7px] rounded-full dark:bg-[#a78bfa] bg-[#7c5ccf] absolute top-3 right-3 dark:shadow-[0_0_8px_#a78bfa] shadow-[0_0_8px_#7c5ccf]"></div>
+            <span class="font-mono text-[10px] dark:text-[#a78bfa] text-[#7c5ccf] mb-1 block">PHASE 02</span>
+            <div class="font-headline font-bold text-base dark:text-[#f0f1f4] text-[#111318]">Follow-up</div>
+            <div class="text-[11px] dark:text-[#a0a5b8] text-[#5a5f72] mt-1 leading-relaxed">Continue previous engagement threads.</div>
+          </button>
+          <button class="phase-btn glass p-5 rounded-card text-left relative transition-all ring-1 ring-inset dark:ring-white/5 ring-black/5" data-phase="demo" onclick="selectPhase(this)">
+            <div class="phase-dot hidden w-[7px] h-[7px] rounded-full dark:bg-[#fbbf24] bg-[#d99a00] absolute top-3 right-3 dark:shadow-[0_0_8px_#fbbf24] shadow-[0_0_8px_#d99a00]"></div>
+            <span class="font-mono text-[10px] dark:text-[#fbbf24] text-[#d99a00] mb-1 block">PHASE 03</span>
+            <div class="font-headline font-bold text-base dark:text-[#f0f1f4] text-[#111318]">Demo</div>
+            <div class="text-[11px] dark:text-[#a0a5b8] text-[#5a5f72] mt-1 leading-relaxed">Live product demonstration session.</div>
+          </button>
+          <button class="phase-btn glass p-5 rounded-card text-left relative transition-all ring-1 ring-inset dark:ring-white/5 ring-black/5" data-phase="troubleshoot" onclick="selectPhase(this)">
+            <div class="phase-dot hidden w-[7px] h-[7px] rounded-full dark:bg-[#f87171] bg-[#dc3545] absolute top-3 right-3 dark:shadow-[0_0_8px_#f87171] shadow-[0_0_8px_#dc3545]"></div>
+            <span class="font-mono text-[10px] dark:text-[#f87171] text-[#dc3545] mb-1 block">PHASE 04</span>
+            <div class="font-headline font-bold text-base dark:text-[#f0f1f4] text-[#111318]">Troubleshoot</div>
+            <div class="text-[11px] dark:text-[#a0a5b8] text-[#5a5f72] mt-1 leading-relaxed">Diagnose and resolve client issues.</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Start Button -->
+      <div class="pt-4">
+        <button id="start-session-btn" onclick="showScreen('screen-session')" disabled class="w-full h-[56px] primary-gradient rounded-btn flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(0,229,160,0.2)] hover:scale-[1.01] active:scale-[0.98] transition-all disabled:opacity-[0.35] disabled:cursor-not-allowed disabled:hover:scale-100">
+          <span class="font-headline font-extrabold text-[15px] dark:text-[#003824] text-white tracking-wide">Start Session</span>
+          <span class="material-symbols-outlined font-bold dark:text-[#003824] text-white">arrow_forward</span>
+        </button>
+      </div>
+    </div>
+  </main>
+</div>
+
+
+<!-- ╔══════════════════════════════════════════════════════════════╗
+     ║  SCREEN 4+5: SESSION (Header + Tabs + Content)               ║
+     ╚══════════════════════════════════════════════════════════════╝ -->
+<div id="screen-session" class="screen">
+  <!-- Sticky Header -->
+  <header class="fixed top-0 z-50 w-full glass">
+    <div class="max-w-[1400px] mx-auto px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-5">
+        <button onclick="showScreen('screen-dashboard')" class="w-10 h-10 flex items-center justify-center rounded-btn glass hover:dark:bg-white/10 hover:bg-black/5 transition-colors">
+          <span class="material-symbols-outlined dark:text-[#f0f1f4] text-[#111318]">arrow_back</span>
+        </button>
+        <div class="flex flex-col">
+          <h1 class="text-[15.5px] font-[750] tracking-tight dark:text-[#f0f1f4] text-[#111318] font-headline">Aether Dynamics</h1>
+          <div class="flex items-center gap-3 mt-0.5">
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold dark:bg-[#00e5a0]/15 bg-[#00b37e]/15 dark:text-[#00e5a0] text-[#00b37e] uppercase tracking-wider">Requirements</span>
+            <span class="text-xs dark:text-[#a0a5b8] text-[#5a5f72] font-medium">Cloud Infrastructure</span>
+            <span class="font-mono text-[11px] dark:text-[#5c6178] text-[#5a5f72]">2025.10.24</span>
+          </div>
+        </div>
+      </div>
+      <div class="flex items-center gap-5">
+        <!-- Recording indicator -->
+        <div id="recording-indicator" class="hidden items-center gap-3 px-4 py-2 rounded-pill dark:bg-[#0d0e12]/40 bg-[#f1f3f9] dark:border dark:border-white/5 border border-black/5">
+          <div class="w-2 h-2 rounded-full dark:bg-[#ff4d6a] bg-[#e5384b] intel-pulse animate-pulse"></div>
+          <span class="font-mono font-bold dark:text-[#ff4d6a] text-[#e5384b] tracking-tighter text-lg" id="rec-time">00:00</span>
+        </div>
+        <!-- Theme toggle -->
+        <button onclick="toggleTheme()" class="w-10 h-10 flex items-center justify-center rounded-btn dark:hover:bg-white/10 hover:bg-black/5 transition-colors">
+          <span class="material-symbols-outlined dark:text-[#f0f1f4] text-[#111318]"><span class="dark:hidden">light_mode</span><span class="hidden dark:inline">dark_mode</span></span>
+        </button>
+        <!-- Export -->
+        <button class="px-5 py-2 rounded-btn dark:bg-[#292a2e] bg-[#f1f3f9] dark:text-[#f0f1f4] text-[#111318] font-bold text-sm dark:hover:bg-[#343439] hover:bg-[#e2e7f0] transition-all dark:border dark:border-white/5 border border-black/5">Export</button>
+      </div>
+    </div>
+    <!-- Tab Bar -->
+    <div class="max-w-[1400px] mx-auto px-6">
+      <nav class="flex items-center gap-8 overflow-x-auto" id="session-tabs">
+        <button class="tab-btn active flex items-center gap-2 py-4 border-b-[2.5px] dark:border-[#00e5a0] border-[#00b37e] dark:text-[#00e5a0] text-[#00b37e] transition-all" data-tab="record">
+          <span class="material-symbols-outlined text-[20px]">mic</span>
+          <span class="text-sm font-bold font-headline">Record</span>
+        </button>
+        <button class="tab-btn flex items-center gap-2 py-4 border-b-[2.5px] border-transparent dark:text-[#5c6178] text-[#5a5f72] dark:hover:text-[#f0f1f4] hover:text-[#111318] transition-all" data-tab="notes">
+          <span class="material-symbols-outlined text-[20px]">description</span>
+          <span class="text-sm font-bold font-headline">Notes</span>
+        </button>
+        <button class="tab-btn flex items-center gap-2 py-4 border-b-[2.5px] border-transparent dark:text-[#5c6178] text-[#5a5f72] dark:hover:text-[#f0f1f4] hover:text-[#111318] transition-all" data-tab="structure">
+          <span class="material-symbols-outlined text-[20px]">account_tree</span>
+          <span class="text-sm font-bold font-headline">Structure</span>
+        </button>
+        <button class="tab-btn flex items-center gap-2 py-4 border-b-[2.5px] border-transparent dark:text-[#5c6178] text-[#5a5f72] dark:hover:text-[#f0f1f4] hover:text-[#111318] transition-all" data-tab="questions">
+          <span class="material-symbols-outlined text-[20px]">help_center</span>
+          <span class="text-sm font-bold font-headline">Questions</span>
+        </button>
+        <button class="tab-btn flex items-center gap-2 py-4 border-b-[2.5px] border-transparent dark:text-[#5c6178] text-[#5a5f72] dark:hover:text-[#f0f1f4] hover:text-[#111318] transition-all" data-tab="domain">
+          <span class="material-symbols-outlined text-[20px]">menu_book</span>
+          <span class="text-sm font-bold font-headline">Domain</span>
+        </button>
+        <button class="tab-btn flex items-center gap-2 py-4 border-b-[2.5px] border-transparent dark:text-[#5c6178] text-[#5a5f72] dark:hover:text-[#f0f1f4] hover:text-[#111318] transition-all relative" data-tab="solutions">
+          <span class="material-symbols-outlined text-[20px]">lock</span>
+          <span class="text-sm font-bold font-headline">Solutions</span>
+          <span class="absolute -top-1 -right-8 px-1.5 py-0.5 rounded dark:bg-[#ffb347]/15 bg-[#e68a00]/15 text-[9px] font-bold dark:text-[#ffb347] text-[#e68a00] dark:border dark:border-[#ffb347]/20 border border-[#e68a00]/20">Private</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Tab Content -->
+  <main class="pt-40 pb-24 px-6">
+    <div class="max-w-[720px] mx-auto">
+
+      <!-- ── TAB: Record ── -->
+      <div id="tab-record" class="tab-content active space-y-8">
+        <!-- Record Button -->
+        <div class="flex flex-col items-center justify-center gap-6 py-4">
+          <button id="record-btn" onclick="toggleRecording()" class="group relative px-10 py-5 rounded-record primary-gradient dark:text-[#003824] text-white font-black text-xl font-headline flex items-center gap-3 transition-transform active:scale-95 shadow-[0_20px_40px_rgba(0,229,160,0.15)] record-pulse">
+            <span class="w-3 h-3 rounded-full dark:bg-[#003824] bg-white" id="rec-dot"></span>
+            <span id="rec-label">Start Recording</span>
+          </button>
+        </div>
+        <!-- Quick Tags -->
+        <div class="space-y-4">
+          <h3 class="text-xs font-bold dark:text-[#5c6178] text-[#5a5f72] uppercase tracking-widest px-1">Quick Tags</h3>
+          <div class="flex flex-wrap gap-2">
+            <button onclick="addTag('Important','⚠️')" class="px-4 py-2 rounded-pill glass dark:hover:border-[#00e5a0]/50 hover:border-[#00b37e]/50 transition-all flex items-center gap-2 text-sm font-bold dark:text-[#f0f1f4] text-[#111318]"><span>⚠️</span> Important</button>
+            <button onclick="addTag('Question','❓')" class="px-4 py-2 rounded-pill glass dark:hover:border-[#00e5a0]/50 hover:border-[#00b37e]/50 transition-all flex items-center gap-2 text-sm font-bold dark:text-[#f0f1f4] text-[#111318]"><span>❓</span> Question</button>
+            <button onclick="addTag('Decision','✅')" class="px-4 py-2 rounded-pill glass dark:hover:border-[#00e5a0]/50 hover:border-[#00b37e]/50 transition-all flex items-center gap-2 text-sm font-bold dark:text-[#f0f1f4] text-[#111318]"><span>✅</span> Decision</button>
+            <button onclick="addTag('Action','📌')" class="px-4 py-2 rounded-pill glass dark:hover:border-[#00e5a0]/50 hover:border-[#00b37e]/50 transition-all flex items-center gap-2 text-sm font-bold dark:text-[#f0f1f4] text-[#111318]"><span>📌</span> Action</button>
+            <button onclick="addTag('Unclear','🤔')" class="px-4 py-2 rounded-pill glass dark:hover:border-[#00e5a0]/50 hover:border-[#00b37e]/50 transition-all flex items-center gap-2 text-sm font-bold dark:text-[#f0f1f4] text-[#111318]"><span>🤔</span> Unclear</button>
+          </div>
+        </div>
+        <!-- Tag List -->
+        <div class="space-y-2" id="tag-list">
+          <div class="glass p-4 rounded-card flex items-center justify-between group">
+            <div class="flex items-center gap-4">
+              <span class="font-mono text-xs dark:text-[#5c6178] text-[#5a5f72]">04:02</span>
+              <span class="px-2 py-0.5 rounded dark:bg-[#ff4d6a]/10 bg-[#e5384b]/10 dark:text-[#ff4d6a] text-[#e5384b] text-[10px] font-bold uppercase">⚠️ Important</span>
+              <p class="text-sm font-medium dark:text-[#f0f1f4] text-[#111318]">Thermal tolerance for core assembly</p>
+            </div>
+            <button class="opacity-0 group-hover:opacity-100 transition-opacity dark:text-[#5c6178] text-[#5a5f72]">
+              <span class="material-symbols-outlined text-[18px]">close</span>
+            </button>
+          </div>
+          <div class="glass p-4 rounded-card flex items-center justify-between group">
+            <div class="flex items-center gap-4">
+              <span class="font-mono text-xs dark:text-[#5c6178] text-[#5a5f72]">03:45</span>
+              <span class="px-2 py-0.5 rounded dark:bg-[#00e5a0]/10 bg-[#00b37e]/10 dark:text-[#00e5a0] text-[#00b37e] text-[10px] font-bold uppercase">✅ Decision</span>
+              <p class="text-sm font-medium dark:text-[#f0f1f4] text-[#111318]">Switch to titanium alloy outer ring</p>
+            </div>
+            <button class="opacity-0 group-hover:opacity-100 transition-opacity dark:text-[#5c6178] text-[#5a5f72]">
+              <span class="material-symbols-outlined text-[18px]">close</span>
+            </button>
+          </div>
+        </div>
+        <!-- Transcript -->
+        <div class="space-y-4">
+          <div class="flex items-center justify-between px-1">
+            <h2 class="text-lg font-bold font-headline dark:text-[#f0f1f4] text-[#111318]">Live Transcript</h2>
+            <span class="text-xs dark:text-[#5c6178] text-[#5a5f72] font-mono">Real-time</span>
+          </div>
+          <div class="glass-card rounded-card h-[260px] p-6 overflow-y-auto space-y-5">
+            <div class="flex gap-4">
+              <div class="w-8 h-8 rounded dark:bg-[#292a2e] bg-[#e2e7f0] flex-shrink-0 flex items-center justify-center font-mono text-[10px] dark:text-[#5c6178] text-[#5a5f72]">01:12</div>
+              <p class="text-sm leading-relaxed dark:text-[#a0a5b8] text-[#5a5f72]">The primary concern with the current model is heat dissipation at scale. We need to reconsider the internal cooling channels.</p>
+            </div>
+            <div class="flex gap-4">
+              <div class="w-8 h-8 rounded dark:bg-[#292a2e] bg-[#e2e7f0] flex-shrink-0 flex items-center justify-center font-mono text-[10px] dark:text-[#5c6178] text-[#5a5f72]">02:10</div>
+              <p class="text-sm leading-relaxed dark:text-[#00e5a0] text-[#00b37e] font-semibold italic">"If we bypass the secondary system, we save 12% immediately."</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── TAB: Notes ── -->
+      <div id="tab-notes" class="tab-content space-y-4" style="display:none">
+        <textarea class="w-full dark:bg-[#1a1b20] bg-[#f1f3f9] border-none rounded-card px-6 py-5 font-headline text-[15px] leading-[1.7] min-h-[200px] dark:text-[#f0f1f4] text-[#111318] dark:placeholder:text-[#5c6178]/30 placeholder:text-[#5a5f72]/30 focus:ring-2 dark:focus:ring-[#00e5a0]/30 focus:ring-[#00b37e]/30 transition-all resize-y" placeholder="Start typing your session notes here...&#10;&#10;Use this space to capture key observations, client requirements, and action items from the visit." oninput="updateWordCount(this)"></textarea>
+        <div class="flex items-center justify-between px-1">
+          <span class="text-xs dark:text-[#5c6178] text-[#5a5f72] font-mono" id="word-count">0 words</span>
+          <span class="text-xs dark:text-[#5c6178] text-[#5a5f72]">Transcript: Available</span>
+        </div>
+      </div>
+
+      <!-- ── TAB: Structure ── -->
+      <div id="tab-structure" class="tab-content space-y-6" style="display:none">
+        <p class="text-sm dark:text-[#a0a5b8] text-[#5a5f72] text-center py-2">Synthesize your notes into a professional structure using AI.</p>
+        <div class="flex flex-col items-center gap-4 py-8 dark:bg-[#1a1b20] bg-[#f1f3f9] rounded-card">
+          <button onclick="simulateAI('structure-result')" class="group relative px-6 py-3 rounded-btn dark:bg-[#343439] bg-white dark:text-[#f0f1f4] text-[#111318] font-bold text-sm dark:border dark:border-white/5 border border-black/5 dark:hover:border-[#00e5a0]/30 hover:border-[#00b37e]/30 transition-all flex items-center gap-3">
+            <span class="material-symbols-outlined dark:text-[#00e5a0] text-[#00b37e]">auto_awesome</span>
+            Structure My Notes
+          </button>
+          <!-- Loading bar -->
+          <div id="structure-loading" class="hidden w-48 h-[2px] dark:bg-[#00e5a0]/20 bg-[#00b37e]/20 rounded-full overflow-hidden">
+            <div class="w-1/3 h-full dark:bg-[#00e5a0] bg-[#00b37e] rounded-full loading-bar"></div>
+          </div>
+        </div>
+        <!-- AI Result -->
+        <div id="structure-result" class="hidden ai-result rounded-card p-8 space-y-6">
+          <div class="flex items-center gap-3 mb-2">
+            <span class="material-symbols-outlined dark:text-[#00e5a0] text-[#00b37e] text-[20px]">psychology</span>
+            <h3 class="dark:text-[#00e5a0] text-[#00b37e] font-bold font-headline text-lg">AI Structural Synthesis</h3>
+          </div>
+          <div class="space-y-4">
+            <div>
+              <h4 class="text-xs font-black uppercase tracking-widest dark:text-[#5c6178] text-[#5a5f72] mb-2">01. Technical Requirements</h4>
+              <p class="text-sm dark:text-[#a0a5b8] text-[#5a5f72] leading-relaxed">Redesign internal cooling channels to support high-load thermal profiles. Transition to titanium-grade alloys for critical stress points.</p>
+            </div>
+            <div>
+              <h4 class="text-xs font-black uppercase tracking-widest dark:text-[#5c6178] text-[#5a5f72] mb-2">02. Strategic Decisions</h4>
+              <p class="text-sm dark:text-[#a0a5b8] text-[#5a5f72] leading-relaxed">Bypass secondary systems to achieve 12% efficiency improvement and weight reduction targets.</p>
+            </div>
+            <div>
+              <h4 class="text-xs font-black uppercase tracking-widest dark:text-[#5c6178] text-[#5a5f72] mb-2">03. Action Items</h4>
+              <p class="text-sm dark:text-[#a0a5b8] text-[#5a5f72] leading-relaxed">Schedule follow-up engineering review within 2 weeks. Prepare prototype specifications for Q1 evaluation.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── TAB: Questions ── -->
+      <div id="tab-questions" class="tab-content space-y-6" style="display:none">
+        <!-- Starter Questions -->
+        <div class="space-y-4">
+          <h3 class="text-xs font-bold dark:text-[#5c6178] text-[#5a5f72] uppercase tracking-widest px-1">Starter Questions — Requirements Phase</h3>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="glass-card p-5 rounded-card space-y-3 relative overflow-hidden">
+              <div class="absolute top-0 left-0 w-1 h-full dark:bg-[#00e5a0]/40 bg-[#00b37e]/40"></div>
+              <span class="text-[10px] font-bold dark:text-[#00e5a0] text-[#00b37e] uppercase">Discovery</span>
+              <p class="text-sm font-semibold leading-snug dark:text-[#f0f1f4] text-[#111318]">What are the primary KPIs for this initiative?</p>
+            </div>
+            <div class="glass-card p-5 rounded-card space-y-3 relative overflow-hidden">
+              <div class="absolute top-0 left-0 w-1 h-full dark:bg-[#fbbf24]/40 bg-[#d99a00]/40"></div>
+              <span class="text-[10px] font-bold dark:text-[#fbbf24] text-[#d99a00] uppercase">Constraint</span>
+              <p class="text-sm font-semibold leading-snug dark:text-[#f0f1f4] text-[#111318]">Are there regulatory hurdles before launch?</p>
+            </div>
+            <div class="glass-card p-5 rounded-card space-y-3 relative overflow-hidden">
+              <div class="absolute top-0 left-0 w-1 h-full dark:bg-[#a78bfa]/40 bg-[#7c5ccf]/40"></div>
+              <span class="text-[10px] font-bold dark:text-[#a78bfa] text-[#7c5ccf] uppercase">Future State</span>
+              <p class="text-sm font-semibold leading-snug dark:text-[#f0f1f4] text-[#111318]">How does the team define success in 3 years?</p>
+            </div>
+            <div class="glass-card p-5 rounded-card space-y-3 relative overflow-hidden">
+              <div class="absolute top-0 left-0 w-1 h-full dark:bg-[#f87171]/40 bg-[#dc3545]/40"></div>
+              <span class="text-[10px] font-bold dark:text-[#f87171] text-[#dc3545] uppercase">Risk</span>
+              <p class="text-sm font-semibold leading-snug dark:text-[#f0f1f4] text-[#111318]">What happens if the timeline slips by a quarter?</p>
+            </div>
+          </div>
+        </div>
+        <!-- Divider -->
+        <div class="dark:border-t dark:border-white/5 border-t border-black/5"></div>
+        <!-- AI Generation -->
+        <div class="flex flex-col items-center gap-4 py-4">
+          <button onclick="simulateAI('questions-result')" class="px-6 py-3 rounded-btn dark:bg-[#343439] bg-white dark:text-[#f0f1f4] text-[#111318] font-bold text-sm dark:border dark:border-white/5 border border-black/5 dark:hover:border-[#00e5a0]/30 hover:border-[#00b37e]/30 transition-all flex items-center gap-3">
+            <span class="material-symbols-outlined dark:text-[#00e5a0] text-[#00b37e]">auto_awesome</span>
+            Generate AI Questions
+          </button>
+        </div>
+        <div id="questions-result" class="hidden ai-result rounded-card p-8 space-y-4">
+          <div class="flex items-center gap-3 mb-2">
+            <span class="material-symbols-outlined dark:text-[#00e5a0] text-[#00b37e] text-[20px]">psychology</span>
+            <h3 class="dark:text-[#00e5a0] text-[#00b37e] font-bold font-headline text-lg">AI-Generated Questions</h3>
+          </div>
+          <ul class="space-y-3 text-sm dark:text-[#a0a5b8] text-[#5a5f72] leading-relaxed">
+            <li class="flex items-start gap-2"><span class="dark:text-[#00e5a0] text-[#00b37e] mt-0.5">1.</span> What existing infrastructure will this solution need to integrate with?</li>
+            <li class="flex items-start gap-2"><span class="dark:text-[#00e5a0] text-[#00b37e] mt-0.5">2.</span> Who are the primary stakeholders for sign-off at each phase?</li>
+            <li class="flex items-start gap-2"><span class="dark:text-[#00e5a0] text-[#00b37e] mt-0.5">3.</span> What is the allocated budget range for this engagement?</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- ── TAB: Domain ── -->
+      <div id="tab-domain" class="tab-content space-y-6" style="display:none">
+        <p class="text-sm dark:text-[#a0a5b8] text-[#5a5f72]">Research domain intelligence for <strong class="dark:text-[#f0f1f4] text-[#111318]">Cloud Infrastructure</strong> to prepare for your session.</p>
+        <div class="flex gap-3">
+          <div class="flex-1 glass rounded-btn flex items-center px-4 py-1">
+            <span class="material-symbols-outlined dark:text-[#5c6178] text-[#5a5f72] mr-3">language</span>
+            <input class="w-full bg-transparent border-none focus:ring-0 text-sm font-medium dark:text-[#f0f1f4] text-[#111318] dark:placeholder:text-[#5c6178]/40 placeholder:text-[#5a5f72]/40" placeholder="Enter industry term or topic..." type="text"/>
+          </div>
+          <button onclick="simulateAI('domain-result')" class="glass px-6 py-2.5 rounded-btn font-bold text-sm dark:text-[#f0f1f4] text-[#111318] dark:hover:bg-white/10 hover:bg-black/5 transition-all">Look Up</button>
+        </div>
+        <div id="domain-result" class="hidden ai-result rounded-card p-8 space-y-4">
+          <div class="flex items-center gap-3 mb-2">
+            <span class="material-symbols-outlined dark:text-[#00e5a0] text-[#00b37e] text-[20px]">menu_book</span>
+            <h3 class="dark:text-[#00e5a0] text-[#00b37e] font-bold font-headline text-lg">Domain Intelligence</h3>
+          </div>
+          <div class="space-y-3 text-sm dark:text-[#a0a5b8] text-[#5a5f72] leading-relaxed">
+            <p><strong class="dark:text-[#f0f1f4] text-[#111318]">Cloud Infrastructure</strong> market is projected to reach $1.2T by 2028. Key players include hyperscalers (AWS, Azure, GCP) and emerging multi-cloud orchestration platforms.</p>
+            <p>Current trends: edge computing adoption, serverless architectures, AI-optimized infrastructure, and sustainability-driven data center innovations.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── TAB: Solutions ── -->
+      <div id="tab-solutions" class="tab-content space-y-6" style="display:none">
+        <!-- Private warning -->
+        <div class="glass-card rounded-card p-6 warn-card">
+          <div class="flex items-center gap-2 mb-4">
+            <span class="material-symbols-outlined dark:text-[#ffb347] text-[#e68a00]">security</span>
+            <span class="font-bold text-sm dark:text-[#ffb347] text-[#e68a00]">🔒 Private — Never shown to clients</span>
+          </div>
+          <textarea class="w-full bg-transparent border-none focus:ring-0 font-headline text-[15px] leading-[1.7] min-h-[200px] dark:text-[#f0f1f4] text-[#111318] dark:placeholder:text-[#5c6178]/20 placeholder:text-[#5a5f72]/20 p-0 resize-y" placeholder="Draft your solution hypothesis here... The AI will help refine these into professional deliverables."></textarea>
+          <div class="flex justify-end mt-4">
+            <button onclick="simulateAI('solutions-result')" class="primary-gradient dark:text-[#003824] text-white px-6 py-2.5 rounded-btn font-bold text-sm shadow-sm hover:scale-[0.98] transition-transform active:scale-95">Review My Ideas</button>
+          </div>
+        </div>
+        <!-- AI Result -->
+        <div id="solutions-result" class="hidden ai-result rounded-card p-8 space-y-4">
+          <div class="flex items-center gap-3 mb-2">
+            <span class="material-symbols-outlined dark:text-[#00e5a0] text-[#00b37e] text-[20px]">auto_awesome</span>
+            <h3 class="dark:text-[#00e5a0] text-[#00b37e] font-bold font-headline text-lg">AI Analysis & Refinement</h3>
+          </div>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="p-4 dark:bg-white/5 bg-white/40 rounded-btn dark:border dark:border-white/5 border border-black/5">
+              <span class="font-mono text-[10px] dark:text-[#00e5a0] text-[#00b37e] font-bold">Optimization 01</span>
+              <p class="text-sm mt-2 leading-relaxed dark:text-[#a0a5b8] text-[#5a5f72]">Map technical requirements to existing infrastructure to reduce friction in Phase 2.</p>
+            </div>
+            <div class="p-4 dark:bg-white/5 bg-white/40 rounded-btn dark:border dark:border-white/5 border border-black/5">
+              <span class="font-mono text-[10px] dark:text-[#00e5a0] text-[#00b37e] font-bold">Optimization 02</span>
+              <p class="text-sm mt-2 leading-relaxed dark:text-[#a0a5b8] text-[#5a5f72]">Budget allocation aligns with client's fiscal Q3 constraints identified in notes.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+
+<!-- ╔══════════════════════════════════════════════════════════════╗
+     ║  TOAST NOTIFICATION                                          ║
+     ╚══════════════════════════════════════════════════════════════╝ -->
+<div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 z-[80] hidden dark:bg-[#121317] bg-white dark:border dark:border-[#00e5a0]/20 border border-[#00b37e]/20 px-6 py-3 rounded-btn flex items-center gap-3 shadow-[0_10px_30px_rgba(0,0,0,0.3)]">
+  <div class="w-2 h-2 rounded-full primary-gradient"></div>
+  <span class="dark:text-[#00e5a0] text-[#00b37e] font-headline font-bold text-sm tracking-wide" id="toast-text"></span>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════
+     JAVASCRIPT
+     ═══════════════════════════════════════════════════════════════ -->
+<script>
+// ── Theme Toggle ──
+function toggleTheme() {
+  document.documentElement.classList.toggle('dark');
+}
+
+// ── Screen Navigation ──
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// ── Delete Modal ──
+function showDeleteModal() {
+  const m = document.getElementById('delete-modal');
+  m.classList.remove('hidden');
+  m.classList.add('flex');
+}
+function hideDeleteModal() {
+  const m = document.getElementById('delete-modal');
+  m.classList.add('hidden');
+  m.classList.remove('flex');
+}
+
+// ── Toast ──
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-text').textContent = msg;
+  t.classList.remove('hidden', 'toast-exit');
+  t.classList.add('flex', 'toast-enter');
+  setTimeout(() => {
+    t.classList.remove('toast-enter');
+    t.classList.add('toast-exit');
+    setTimeout(() => { t.classList.add('hidden'); t.classList.remove('flex', 'toast-exit'); }, 350);
+  }, 2500);
+}
+
+// ── Tab Switching ──
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    // Deactivate all tabs
+    document.querySelectorAll('.tab-btn').forEach(b => {
+      b.classList.remove('active');
+      b.classList.add('border-transparent');
+      b.classList.remove('dark:border-[#00e5a0]', 'border-[#00b37e]', 'dark:text-[#00e5a0]', 'text-[#00b37e]');
+      b.classList.add('dark:text-[#5c6178]', 'text-[#5a5f72]');
+    });
+    // Activate clicked
+    btn.classList.add('active');
+    btn.classList.remove('border-transparent', 'dark:text-[#5c6178]', 'text-[#5a5f72]');
+    btn.classList.add('dark:border-[#00e5a0]', 'border-[#00b37e]', 'dark:text-[#00e5a0]', 'text-[#00b37e]');
+    // Show content
+    document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+    document.getElementById('tab-' + btn.dataset.tab).style.display = '';
+  });
+});
+
+// ── Filter Pills ──
+document.querySelectorAll('.filter-pill').forEach(pill => {
+  pill.addEventListener('click', () => {
+    const filter = pill.dataset.filter;
+    // Visual active state for "All" pill
+    document.querySelectorAll('.filter-pill').forEach(p => {
+      if (p.dataset.filter === 'all') {
+        if (filter === 'all') {
+          p.classList.add('dark:bg-[#1f1f24]', 'bg-[#111318]', 'dark:text-[#f0f1f4]', 'text-white');
+        } else {
+          p.classList.remove('dark:bg-[#1f1f24]', 'bg-[#111318]', 'dark:text-[#f0f1f4]', 'text-white');
+        }
+      }
+    });
+    // Filter cards
+    document.querySelectorAll('.session-card').forEach(card => {
+      if (filter === 'all' || card.dataset.phase === filter) {
+        card.style.display = '';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  });
+});
+
+// ── Phase Selection (Setup) ──
+let selectedPhase = null;
+function selectPhase(el) {
+  document.querySelectorAll('.phase-btn').forEach(b => {
+    b.classList.remove('dark:border-[#00e5a0]/60', 'dark:bg-[#00e5a0]/10', 'dark:border-[#a78bfa]/60', 'dark:bg-[#a78bfa]/10', 'dark:border-[#fbbf24]/60', 'dark:bg-[#fbbf24]/10', 'dark:border-[#f87171]/60', 'dark:bg-[#f87171]/10');
+    b.classList.remove('border-[#00b37e]/60', 'bg-[#00b37e]/10', 'border-[#7c5ccf]/60', 'bg-[#7c5ccf]/10', 'border-[#d99a00]/60', 'bg-[#d99a00]/10', 'border-[#dc3545]/60', 'bg-[#dc3545]/10');
+    b.querySelector('.phase-dot').classList.add('hidden');
+  });
+  const phase = el.dataset.phase;
+  selectedPhase = phase;
+  const colors = {
+    'requirements': { dark: ['#00e5a0'], light: ['#00b37e'] },
+    'follow-up': { dark: ['#a78bfa'], light: ['#7c5ccf'] },
+    'demo': { dark: ['#fbbf24'], light: ['#d99a00'] },
+    'troubleshoot': { dark: ['#f87171'], light: ['#dc3545'] },
+  };
+  const c = colors[phase];
+  el.classList.add(`dark:border-[${c.dark[0]}]/60`, `dark:bg-[${c.dark[0]}]/10`);
+  el.classList.add(`border-[${c.light[0]}]/60`, `bg-[${c.light[0]}]/10`);
+  el.querySelector('.phase-dot').classList.remove('hidden');
+  validateSetup();
+}
+
+// ── Setup Validation ──
+function validateSetup() {
+  const client = document.getElementById('setup-client').value.trim();
+  const industry = document.getElementById('setup-industry').value;
+  const btn = document.getElementById('start-session-btn');
+  btn.disabled = !(client && industry && selectedPhase);
+}
+
+// ── Recording Toggle ──
+let isRecording = false;
+let recInterval = null;
+let recSeconds = 0;
+function toggleRecording() {
+  isRecording = !isRecording;
+  const btn = document.getElementById('record-btn');
+  const label = document.getElementById('rec-label');
+  const dot = document.getElementById('rec-dot');
+  const indicator = document.getElementById('recording-indicator');
+  if (isRecording) {
+    label.textContent = 'Stop Recording';
+    btn.classList.remove('primary-gradient');
+    btn.classList.add('dark:bg-[#ff4d6a]', 'bg-[#e5384b]');
+    dot.classList.add('dark:bg-white', 'bg-white', 'rounded-sm');
+    dot.classList.remove('rounded-full');
+    indicator.classList.remove('hidden');
+    indicator.classList.add('flex');
+    recSeconds = 0;
+    recInterval = setInterval(() => {
+      recSeconds++;
+      const m = String(Math.floor(recSeconds / 60)).padStart(2, '0');
+      const s = String(recSeconds % 60).padStart(2, '0');
+      document.getElementById('rec-time').textContent = m + ':' + s;
+    }, 1000);
+  } else {
+    label.textContent = 'Start Recording';
+    btn.classList.add('primary-gradient');
+    btn.classList.remove('dark:bg-[#ff4d6a]', 'bg-[#e5384b]');
+    dot.classList.remove('dark:bg-white', 'bg-white', 'rounded-sm');
+    dot.classList.add('rounded-full');
+    indicator.classList.add('hidden');
+    indicator.classList.remove('flex');
+    clearInterval(recInterval);
+    showToast('Recording saved');
+  }
+}
+
+// ── Add Tag ──
+function addTag(name, emoji) {
+  const list = document.getElementById('tag-list');
+  const m = String(Math.floor(recSeconds / 60)).padStart(2, '0');
+  const s = String(recSeconds % 60).padStart(2, '0');
+  const time = isRecording ? m + ':' + s : '--:--';
+  const el = document.createElement('div');
+  el.className = 'glass p-4 rounded-card flex items-center justify-between group';
+  el.innerHTML = `
+    <div class="flex items-center gap-4">
+      <span class="font-mono text-xs dark:text-[#5c6178] text-[#5a5f72]">${time}</span>
+      <span class="px-2 py-0.5 rounded dark:bg-[#00e5a0]/10 bg-[#00b37e]/10 dark:text-[#00e5a0] text-[#00b37e] text-[10px] font-bold uppercase">${emoji} ${name}</span>
+      <p class="text-sm font-medium dark:text-[#f0f1f4] text-[#111318]">Tagged moment</p>
+    </div>
+    <button class="opacity-0 group-hover:opacity-100 transition-opacity dark:text-[#5c6178] text-[#5a5f72]" onclick="this.parentElement.remove()">
+      <span class="material-symbols-outlined text-[18px]">close</span>
+    </button>`;
+  list.prepend(el);
+  showToast(emoji + ' ' + name + ' tagged');
+}
+
+// ── Word Count ──
+function updateWordCount(el) {
+  const words = el.value.trim().split(/\s+/).filter(w => w).length;
+  document.getElementById('word-count').textContent = words + ' word' + (words !== 1 ? 's' : '');
+}
+
+// ── Simulate AI ──
+function simulateAI(resultId) {
+  const result = document.getElementById(resultId);
+  const loadingId = resultId.replace('-result', '-loading');
+  const loading = document.getElementById(loadingId);
+  if (loading) { loading.classList.remove('hidden'); }
+  // Simulate loading
+  setTimeout(() => {
+    if (loading) { loading.classList.add('hidden'); }
+    result.classList.remove('hidden');
+    result.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    showToast('AI analysis complete');
+  }, 1800);
+}
+</script>
+</body>
+</html>

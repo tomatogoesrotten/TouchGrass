@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@700;800;900&amp;family=Plus+Jakarta+Sans:wght@500;600;700&amp;family=JetBrains+Mono&amp;family=Space+Grotesk:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-surface-variant": "#bacbbf",
+              "background": "#121317",
+              "on-error": "#690005",
+              "surface-container": "#1f1f24",
+              "surface-tint": "#00e29e",
+              "outline-variant": "#3b4a41",
+              "surface-variant": "#343439",
+              "primary": "#6effc0",
+              "surface-container-highest": "#343439",
+              "on-primary-fixed-variant": "#005236",
+              "surface-bright": "#38393e",
+              "error-container": "#93000a",
+              "on-primary-container": "#006141",
+              "surface": "#121317",
+              "inverse-primary": "#006c49",
+              "on-primary": "#003824",
+              "inverse-surface": "#e3e2e8",
+              "on-background": "#e3e2e8",
+              "surface-container-low": "#1a1b20",
+              "primary-container": "#00e5a0",
+              "tertiary-container": "#fcc025",
+              "surface-container-lowest": "#0d0e12",
+              "error": "#ffb4ab",
+              "primary-fixed-dim": "#00e29e",
+              "surface-dim": "#121317",
+              "on-tertiary": "#402d00",
+              "surface-container-high": "#292a2e",
+              "on-surface": "#e3e2e8",
+              "outline": "#84958a"
+            },
+            fontFamily: {
+              "headline": ["Outfit"],
+              "body": ["Plus Jakarta Sans"],
+              "label": ["Space Grotesk"],
+              "mono": ["JetBrains Mono"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "8px", "xl": "10px", "2xl": "14px", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #0a0b0f;
+            background-image: 
+                radial-gradient(circle at 0% 0%, rgba(0, 229, 160, 0.07) 0%, transparent 50%),
+                radial-gradient(circle at 100% 100%, rgba(167, 139, 250, 0.06) 0%, transparent 50%),
+                radial-gradient(circle at 50% 0%, rgba(251, 191, 36, 0.04) 0%, transparent 40%);
+            min-height: 100vh;
+        }
+        .glass-panel {
+            background: rgba(18, 21, 30, 0.72);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .phase-active-1 { border-color: rgba(0, 229, 160, 0.6); background-color: rgba(0, 229, 160, 0.1); }
+        .phase-active-2 { border-color: rgba(167, 139, 250, 0.6); background-color: rgba(167, 139, 250, 0.1); }
+        .phase-active-3 { border-color: rgba(251, 191, 36, 0.6); background-color: rgba(251, 191, 36, 0.1); }
+        .phase-active-4 { border-color: rgba(248, 113, 113, 0.6); background-color: rgba(248, 113, 113, 0.1); }
+    </style>
+</head>
+<body class="font-body text-on-surface antialiased">
+<!-- Shell Suppressed: Task-Focused Page (Linear Flow) -->
+<main class="max-w-[540px] mx-auto px-6 pt-12 pb-24">
+<!-- Navigation & Header -->
+<header class="flex justify-between items-center mb-10">
+<a class="flex items-center gap-2 text-primary-container font-semibold text-sm tracking-wide hover:opacity-80 transition-opacity" href="#">
+<span class="material-symbols-outlined text-[18px]">arrow_back</span>
+                Dashboard
+            </a>
+<button class="p-2 rounded-full hover:bg-white/5 transition-colors">
+<span class="material-symbols-outlined text-[#f0f1f4]">dark_mode</span>
+</button>
+</header>
+<section class="mb-12">
+<h1 class="font-headline font-black text-[30px] leading-tight text-[#f0f1f4] tracking-tight">
+                New Session
+            </h1>
+<p class="text-on-surface-variant font-medium mt-2 text-sm">Initialize a new client field engagement.</p>
+</section>
+<!-- Form Canvas -->
+<div class="space-y-8">
+<!-- Inputs Group -->
+<div class="glass-panel p-8 rounded-2xl shadow-2xl">
+<div class="space-y-6">
+<!-- Client Input -->
+<div class="space-y-2">
+<label class="block text-[10.5px] font-bold uppercase tracking-widest text-on-surface-variant px-1">Client Name</label>
+<input class="w-full h-12 bg-surface-container-low border-none rounded-xl px-4 text-[14.5px] font-medium text-on-surface placeholder:text-on-surface-variant/30 focus:ring-2 focus:ring-primary-container/40 transition-all" placeholder="e.g. Meridian Global" type="text"/>
+</div>
+<!-- Industry Input -->
+<div class="space-y-2">
+<label class="block text-[10.5px] font-bold uppercase tracking-widest text-on-surface-variant px-1">Industry Sector</label>
+<select class="w-full h-12 bg-surface-container-low border-none rounded-xl px-4 text-[14.5px] font-medium text-on-surface appearance-none focus:ring-2 focus:ring-primary-container/40">
+<option>Renewable Energy</option>
+<option>Precision Logistics</option>
+<option>Asset Management</option>
+<option>Cloud Infrastructure</option>
+</select>
+</div>
+<!-- Attendees Input -->
+<div class="space-y-2">
+<label class="block text-[10.5px] font-bold uppercase tracking-widest text-on-surface-variant px-1">Key Attendees</label>
+<div class="relative">
+<input class="w-full h-12 bg-surface-container-low border-none rounded-xl pl-4 pr-12 text-[14.5px] font-medium text-on-surface placeholder:text-on-surface-variant/30 focus:ring-2 focus:ring-primary-container/40" placeholder="Add participants..." type="text"/>
+<span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant/60">group_add</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Phase Selector -->
+<div class="space-y-4">
+<label class="block text-[10.5px] font-bold uppercase tracking-widest text-on-surface-variant px-1">Engagement Phase</label>
+<div class="grid grid-cols-2 gap-4">
+<!-- Phase 1: Active State Example -->
+<button class="glass-panel phase-active-1 p-5 rounded-2xl text-left relative transition-all ring-1 ring-inset ring-white/5 hover:ring-primary-container/30">
+<div class="w-[7px] h-[7px] rounded-full bg-[#00e5a0] absolute top-3 right-3 shadow-[0_0_8px_#00e5a0]"></div>
+<span class="font-mono text-[10px] text-primary-container mb-1 block">PHASE 01</span>
+<div class="font-headline font-bold text-base text-[#f0f1f4]">Discovery</div>
+<div class="text-[11px] text-on-surface-variant mt-1 leading-relaxed">Initial assessment and baseline data sync.</div>
+</button>
+<!-- Phase 2 -->
+<button class="glass-panel p-5 rounded-2xl text-left relative transition-all ring-1 ring-inset ring-white/5 hover:ring-[#a78bfa]/40">
+<span class="font-mono text-[10px] text-[#a78bfa] mb-1 block">PHASE 02</span>
+<div class="font-headline font-bold text-base text-[#f0f1f4]">Structural</div>
+<div class="text-[11px] text-on-surface-variant mt-1 leading-relaxed">Mapping core hierarchies and systems.</div>
+</button>
+<!-- Phase 3 -->
+<button class="glass-panel p-5 rounded-2xl text-left relative transition-all ring-1 ring-inset ring-white/5 hover:ring-[#fbbf24]/40">
+<span class="font-mono text-[10px] text-[#fbbf24] mb-1 block">PHASE 03</span>
+<div class="font-headline font-bold text-base text-[#f0f1f4]">Analysis</div>
+<div class="text-[11px] text-on-surface-variant mt-1 leading-relaxed">Live querying and pattern recognition.</div>
+</button>
+<!-- Phase 4 -->
+<button class="glass-panel p-5 rounded-2xl text-left relative transition-all ring-1 ring-inset ring-white/5 hover:ring-[#f87171]/40">
+<span class="font-mono text-[10px] text-[#f87171] mb-1 block">PHASE 04</span>
+<div class="font-headline font-bold text-base text-[#f0f1f4]">Resolution</div>
+<div class="text-[11px] text-on-surface-variant mt-1 leading-relaxed">Synthesizing findings and next steps.</div>
+</button>
+</div>
+</div>
+<!-- Action Button -->
+<div class="pt-4">
+<button class="w-full h-[56px] bg-gradient-to-r from-primary-container to-[#00e5a0] rounded-xl flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(0,229,160,0.2)] hover:scale-[1.01] active:scale-[0.98] transition-all">
+<span class="font-headline font-extrabold text-[15px] text-on-primary-container tracking-wide">Start Session</span>
+<span class="material-symbols-outlined font-bold text-on-primary-container">arrow_forward</span>
+</button>
+<p class="text-center text-[11px] text-on-surface-variant/40 mt-6 font-medium">
+                    Session intelligence is encrypted and synced in real-time.
+                </p>
+</div>
+</div>
+</main>
+<!-- Contextual FAB Suppression: Task-focused form screen -->
+</body></html>

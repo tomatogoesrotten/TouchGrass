@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Field Companion — Delete Session</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@700;800;900&amp;family=Plus+Jakarta+Sans:wght@500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-surface-variant": "#bacbbf",
+                        "background": "#121317",
+                        "on-error": "#690005",
+                        "surface-container": "#1f1f24",
+                        "surface-tint": "#00e29e",
+                        "outline-variant": "#3b4a41",
+                        "surface-variant": "#343439",
+                        "primary": "#6effc0",
+                        "surface-container-highest": "#343439",
+                        "on-primary-container": "#006141",
+                        "surface": "#121317",
+                        "on-primary": "#003824",
+                        "surface-container-low": "#1a1b20",
+                        "primary-container": "#00e5a0",
+                        "surface-container-lowest": "#0d0e12",
+                        "error": "#ffb4ab",
+                        "primary-fixed-dim": "#00e29e",
+                        "surface-dim": "#121317",
+                        "surface-container-high": "#292a2e",
+                        "on-surface": "#e3e2e8",
+                        "danger": "#ff4d6a"
+                    },
+                    fontFamily: {
+                        "headline": ["Outfit", "sans-serif"],
+                        "body": ["Plus Jakarta Sans", "sans-serif"],
+                        "mono": ["JetBrains Mono", "monospace"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1.125rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #0a0b0f;
+            background-image: 
+                radial-gradient(circle at 0% 0%, rgba(110, 255, 192, 0.07) 0%, transparent 50%),
+                radial-gradient(circle at 100% 100%, rgba(206, 189, 255, 0.06) 0%, transparent 50%),
+                radial-gradient(circle at 50% 0%, rgba(255, 223, 159, 0.04) 0%, transparent 40%);
+        }
+        .glass-blur {
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="font-body text-[#f0f1f4] min-h-screen selection:bg-primary/30">
+<!-- Top Navigation Shell (Suppressed based on Transactional/Modal Focus) -->
+<!-- Navigation is hidden to prioritize the destructive action focus as per UX Goal guidelines -->
+<main class="relative min-h-screen flex items-center justify-center p-6">
+<!-- Mock Background Content (Simulating the Dashboard behind the modal) -->
+<div class="absolute inset-0 z-0 overflow-hidden opacity-20 pointer-events-none px-6 pt-24">
+<div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="h-64 bg-surface-container-low rounded-2xl"></div>
+<div class="h-64 bg-surface-container-low rounded-2xl"></div>
+<div class="h-64 bg-surface-container-low rounded-2xl"></div>
+<div class="col-span-2 h-96 bg-surface-container-low rounded-2xl"></div>
+<div class="h-96 bg-surface-container-low rounded-2xl"></div>
+</div>
+</div>
+<!-- Modal Overlay -->
+<div class="modal-overlay fixed inset-0 z-[60] flex items-center justify-center p-4">
+<!-- Center Card -->
+<div class="bg-[#121317] w-full max-w-[440px] rounded-[18px] p-[30px] shadow-[0_20px_40px_rgba(0,0,0,0.4)] relative overflow-hidden">
+<!-- Subtle Top Accent Glow -->
+<div class="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-danger/30 to-transparent"></div>
+<div class="flex flex-col gap-6">
+<!-- Title & Icon Header -->
+<div class="flex items-start justify-between">
+<div class="bg-danger/10 p-3 rounded-xl">
+<span class="material-symbols-outlined text-danger text-[28px]">delete_forever</span>
+</div>
+</div>
+<div class="space-y-2">
+<h2 class="font-headline text-[18px] font-[750] text-[#f0f1f4] tracking-tight">
+                            Delete session?
+                        </h2>
+<p class="text-[14px] leading-relaxed text-[#a0a5b8] font-medium">
+                            This action cannot be undone. Are you sure you want to permanently delete this intelligence session?
+                        </p>
+</div>
+<!-- Intelligence Metadata (Editorial precision) -->
+<div class="bg-surface-container-lowest/50 rounded-xl p-4 flex items-center gap-4">
+<div class="flex flex-col">
+<span class="text-[10px] uppercase tracking-widest text-[#a0a5b8] font-bold">Session ID</span>
+<span class="font-mono text-[12px] text-primary-container">FC-9928-XJ</span>
+</div>
+<div class="w-px h-8 bg-outline-variant/20"></div>
+<div class="flex flex-col">
+<span class="text-[10px] uppercase tracking-widest text-[#a0a5b8] font-bold">Recorded</span>
+<span class="font-mono text-[12px] text-[#f0f1f4]">2023.10.24</span>
+</div>
+</div>
+<!-- Actions -->
+<div class="flex flex-col sm:flex-row gap-3 mt-2">
+<button class="flex-1 order-2 sm:order-1 h-[48px] rounded-[10px] bg-[#f0f1f4]/5 hover:bg-[#f0f1f4]/10 border border-[#f0f1f4]/10 transition-all active:scale-95 flex items-center justify-center text-[#f0f1f4] font-bold text-[14px]">
+                            Cancel
+                        </button>
+<button class="flex-1 order-1 sm:order-2 h-[48px] rounded-[10px] bg-danger hover:bg-[#ff3355] transition-all active:scale-95 flex items-center justify-center text-white font-bold text-[14px] shadow-lg shadow-danger/20">
+                            Delete
+                        </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Toast Notification (Fixed bottom-center) -->
+<div class="fixed bottom-10 left-1/2 -translate-x-1/2 z-[70] flex items-center gap-3 bg-[#121317] border border-primary/20 px-5 py-3 rounded-[10px] shadow-[0_10px_30px_rgba(0,0,0,0.5)] min-w-[320px]">
+<span class="material-symbols-outlined text-primary text-[20px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<div class="flex-1">
+<p class="text-[13px] font-bold text-primary tracking-tight">Awaiting confirmation</p>
+</div>
+<button class="text-[#a0a5b8] hover:text-[#f0f1f4] transition-colors">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+</main>
+<!-- Header / Brand Anchor (Only for context, usually fixed at top) -->
+<header class="fixed top-0 w-full flex justify-between items-center px-6 py-4 bg-[#121317]/72 backdrop-blur-lg z-50 pointer-events-none">
+<div class="text-[21px] font-[800] tracking-tight text-[#f0f1f4] font-['Outfit']">
+            Field Companion
+        </div>
+<div class="flex items-center gap-4">
+<div class="w-8 h-8 rounded-full bg-surface-container overflow-hidden">
+<img class="w-full h-full object-cover grayscale" data-alt="User profile avatar placeholder" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDLvPFTTtEZcypZBbx3tB_i99UwoXaiSq-iGvkMlB_Xqu_rjlHivFwhzK-pRnijakpGkeJGoS3W5hofh6_eYCb0LxOpQTG6k9-qAlXoB_w4yxV-QVmacnpMhh45-Mkrk8DQyXHR01lelcL825_fFvUuVVveJuTr8plEpv2O_Cbpm166a2rKLG2CA9b_w8fVMyTbNt09d1FSU56Ks7hBYzW5aGJvncrFUW-5swMfNQwcki76Dd1IvLpm-H1SwC05kezgdtr9fwpcZqw"/>
+</div>
+</div>
+</header>
+</body></html>
