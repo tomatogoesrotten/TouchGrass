@@ -56,7 +56,7 @@ export function ExportModal({ open, onClose }: Props) {
       }
       setDoneId(format)
     } catch {
-      toast(`Export failed — try again`)
+      toast(`Export failed — try again`, 'error')
     } finally {
       setLoadingId(null)
       setTimeout(() => setDoneId(null), 2000)

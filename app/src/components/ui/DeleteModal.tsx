@@ -22,7 +22,7 @@ export function DeleteModal() {
       await removeSession(deleteTarget.id)
       toast('Session deleted')
     } catch {
-      toast('Failed to delete session')
+      toast('Failed to delete session', 'error')
     } finally {
       setDeleting(false)
     }

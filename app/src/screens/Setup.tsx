@@ -49,7 +49,7 @@ export function Setup() {
       useSession.setState({ activeSession: session })
       navigate('/session')
     } catch {
-      toast('Failed to create session')
+      toast('Failed to create session', 'error')
       setSubmitting(false)
     }
   }

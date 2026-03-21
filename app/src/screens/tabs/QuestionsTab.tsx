@@ -37,7 +37,7 @@ export function QuestionsTab() {
       updateActiveSession({ aiQuestions: result })
       toast('AI analysis complete')
     } catch {
-      toast('AI request failed — try again')
+      toast('AI request failed — try again', 'error')
     } finally {
       setLoading(false)
     }

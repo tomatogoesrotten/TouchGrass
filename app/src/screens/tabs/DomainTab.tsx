@@ -30,7 +30,7 @@ export function DomainTab() {
       setResult(data.result)
       toast('Domain intelligence loaded')
     } catch {
-      toast('Lookup failed — try again')
+      toast('Lookup failed — try again', 'error')
     } finally {
       setLoading(false)
     }
