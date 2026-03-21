@@ -185,9 +185,9 @@ export function Dashboard() {
                 </div>
                 <div className="flex flex-wrap gap-2 items-center">
                   <button
-                    className="px-4 py-1.5 rounded-[100px] text-[12px] font-semibold transition-all"
+                    className={`px-4 py-1.5 rounded-[100px] text-[12px] font-semibold transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:scale-95 ${filter !== 'all' ? 'hover:bg-black/5 dark:hover:bg-white/5' : ''}`}
                     style={{
-                      backgroundColor: filter === 'all' ? (isDark ? '#262626' : '#ffffff') : 'transparent',
+                      backgroundColor: filter === 'all' ? (isDark ? '#262626' : '#ffffff') : undefined,
                       color: filter === 'all' ? (isDark ? '#fafafa' : '#09090b') : textMuted,
                       border: `1px solid ${filter === 'all' ? (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)') : border}`,
                     }}
@@ -201,9 +201,9 @@ export function Dashboard() {
                     return (
                       <button
                         key={phase}
-                        className="px-4 py-1.5 rounded-[100px] text-[12px] font-semibold transition-all flex items-center gap-1.5"
+                        className={`px-4 py-1.5 rounded-[100px] text-[12px] font-semibold transition-all duration-200 flex items-center gap-1.5 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:scale-95 ${!isActive ? 'hover:bg-black/5 dark:hover:bg-white/5' : ''}`}
                         style={{
-                          backgroundColor: isActive ? `${color}18` : 'transparent',
+                          backgroundColor: isActive ? `${color}18` : undefined,
                           color: isActive ? color : textMuted,
                           border: `1px solid ${isActive ? `${color}40` : border}`,
                         }}
