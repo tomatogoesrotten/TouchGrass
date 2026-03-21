@@ -55,7 +55,7 @@ export function RecordTab() {
   const [savingAudio, setSavingAudio] = useState(false)
   const [loadingAudio, setLoadingAudio] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const lastFinalCountRef = useRef(0)
+  const baseTextRef = useRef('')
 
   const textPrimary = isDark ? '#fafafa' : '#09090b'
   const textSoft = isDark ? '#a1a1aa' : '#52525b'
@@ -164,46 +164,27 @@ export function RecordTab() {
       return
     }
 
-    const existingTranscript = useSession.getState().activeSession?.transcript ?? ''
+    baseTextRef.current = useSession.getState().activeSession?.transcript ?? ''
 
     const recognition = new SR()
     recognition.continuous = settings.speech_settings.continuous
     recognition.interimResults = true
     recognition.lang = settings.speech_settings.language
 
-    lastFinalCountRef.current = 0
-
     recognition.onresult = (e: SpeechRecognitionEvent) => {
-      let newFinals = ''
+      let finals = ''
       let interim = ''
-      let finalCount = 0
 
       for (let i = 0; i < e.results.length; i++) {
-        const result = e.results[i]
-        if (result.isFinal) {
-          finalCount++
-          if (finalCount > lastFinalCountRef.current) {
-            newFinals += result[0].transcript
-          }
+        if (e.results[i].isFinal) {
+          finals += e.results[i][0].transcript
         } else {
-          interim += result[0].transcript
+          interim += e.results[i][0].transcript
         }
       }
 
-      if (newFinals) {
-        lastFinalCountRef.current = finalCount
-        const current = useSession.getState().activeSession?.transcript ?? ''
-        const updated = current + newFinals
-        updateActiveSession({ transcript: updated })
-
-        if (interim) {
-          updateActiveSession({ transcript: updated + interim })
-        }
-      } else if (interim) {
-        const current = useSession.getState().activeSession?.transcript ?? ''
-        const base = getBaseTranscript(current, interim)
-        updateActiveSession({ transcript: base + interim })
-      }
+      const display = baseTextRef.current + finals + interim
+      updateActiveSession({ transcript: display })
     }
 
     recognition.onerror = (e: Event & { error: string }) => {
@@ -222,30 +203,19 @@ export function RecordTab() {
 
     recognition.onend = () => {
       if (activeRef.current) {
-        lastFinalCountRef.current = 0
+        const current = useSession.getState().activeSession?.transcript ?? ''
+        baseTextRef.current = current
         try { recognition.start() } catch { /* already started */ }
       }
     }
 
     recognitionRef.current = recognition
     activeRef.current = true
-
-    if (existingTranscript && !existingTranscript.endsWith('\n') && !existingTranscript.endsWith(' ')) {
-      updateActiveSession({ transcript: existingTranscript + '\n' })
-    }
-
     setAudioUrl(null)
     recognition.start()
     startMediaRecorder()
     setRecSeconds(0)
     setRecording(true)
-  }
-
-  function getBaseTranscript(current: string, interim: string): string {
-    if (current.endsWith(interim)) {
-      return current.slice(0, current.length - interim.length)
-    }
-    return current
   }
 
   function handleAddTag(label: string, emoji: string) {
