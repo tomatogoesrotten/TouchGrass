@@ -92,7 +92,7 @@ export function Dashboard() {
           
           {/* Left Column: Welcome & Stats */}
           <div className="lg:col-span-4 flex flex-col gap-6">
-            <GlassCard className="p-8 flex flex-col justify-center min-h-[180px]" style={{
+            <GlassCard className="p-8 flex flex-col justify-center min-h-[180px]" hoverable style={{
               backgroundImage: isDark ? 'linear-gradient(135deg, rgba(196,240,66,0.1) 0%, transparent 100%)' : 'linear-gradient(135deg, rgba(163,204,41,0.1) 0%, transparent 100%)'
             }}>
               <h1 className="text-[28px] font-bold tracking-tight mb-2" style={{ color: textPrimary }}>
@@ -124,7 +124,7 @@ export function Dashboard() {
               ].map((stat) => {
                 const Icon = stat.icon
                 return (
-                  <GlassCard key={stat.label} className="p-5 flex flex-col">
+                  <GlassCard key={stat.label} className="p-5 flex flex-col" hoverable>
                     <div className="flex items-center justify-between mb-4">
                       <div
                         className="w-9 h-9 rounded-[10px] flex items-center justify-center"
@@ -144,7 +144,7 @@ export function Dashboard() {
               })}
             </div>
 
-            <GlassCard className="p-6">
+            <GlassCard className="p-6" hoverable>
               <div className="flex items-center justify-between mb-4">
                 <span className="text-[13px] font-medium" style={{ color: textSoft }}>
                   Industries
@@ -172,7 +172,7 @@ export function Dashboard() {
               <div className="flex flex-col gap-4 mb-6">
                 <div
                   className="relative w-full rounded-[12px] flex items-center"
-                  style={{ backgroundColor: isDark ? 'var(--color-surface-mid)' : 'var(--color-surface-light-mid)', border: `1px solid ${border}` }}
+                  style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)', border: `1px solid ${border}` }}
                 >
                   <Search size={16} className="absolute left-4" color={textMuted} />
                   <input
@@ -227,20 +227,23 @@ export function Dashboard() {
                         initial={{ opacity: 0, y: 12 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.04, duration: 0.3 }}
-                        className="group relative rounded-[20px] overflow-hidden cursor-pointer transition-all duration-200"
+                        className="group relative rounded-[20px] overflow-hidden cursor-pointer backdrop-blur-xl transition-all duration-300"
                         style={{
-                          backgroundColor: isDark ? 'var(--color-surface-mid)' : 'var(--color-surface-light-mid)',
-                          border: `1px solid ${border}`,
+                          backgroundColor: isDark ? 'rgba(26, 26, 26, 0.5)' : 'rgba(255, 255, 255, 0.5)',
+                          border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.6)'}`,
+                          boxShadow: isDark
+                            ? '0 4px 20px -4px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04)'
+                            : '0 4px 20px -4px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.6)',
                         }}
                         onClick={() => {
                           setActiveSession(session)
                           navigate('/session')
                         }}
                         whileHover={{
-                          y: -3,
+                          y: -6,
                           boxShadow: isDark
-                            ? '0 16px 40px rgba(0,0,0,0.3)'
-                            : '0 12px 32px rgba(0,0,0,0.06)',
+                            ? '0 24px 50px -8px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.08)'
+                            : '0 20px 40px -8px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.8)',
                         }}
                       >
                         {/* Delete button — only on hover */}
@@ -292,7 +295,7 @@ export function Dashboard() {
                     <div
                       className="rounded-[20px] flex flex-col items-center justify-center p-12 min-h-[280px] col-span-full"
                       style={{
-                        backgroundColor: isDark ? 'var(--color-surface-mid)' : 'var(--color-surface-light-mid)',
+                        backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
                         border: `1px dashed ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`,
                       }}
                     >
