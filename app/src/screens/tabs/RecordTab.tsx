@@ -25,6 +25,7 @@ export function RecordTab() {
   const toast = useToast((s) => s.show)
   const recognitionRef = useRef<InstanceType<typeof window.SpeechRecognition> | null>(null)
   const activeRef = useRef(false)
+  const committedRef = useRef('')
 
   const textPrimary = isDark ? '#fafafa' : '#09090b'
   const textSoft = isDark ? '#a1a1aa' : '#52525b'
@@ -58,7 +59,7 @@ export function RecordTab() {
 
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition
     if (!SR) {
-      toast('Speech recognition not available — use Chrome or Edge')
+      toast('Speech recognition not available — use Chrome or Edge', 'error')
       return
     }
 
@@ -68,28 +69,45 @@ export function RecordTab() {
     recognition.lang = 'en-US'
 
     recognition.onresult = (e: SpeechRecognitionEvent) => {
-      let finalText = ''
-      for (let i = e.resultIndex; i < e.results.length; i++) {
+      let sessionFinal = ''
+      for (let i = 0; i < e.results.length; i++) {
         if (e.results[i].isFinal) {
-          finalText += e.results[i][0].transcript + ' '
+          sessionFinal += e.results[i][0].transcript + ' '
         }
       }
-      if (finalText) {
-        const current = useSession.getState().activeSession?.transcript ?? ''
-        updateActiveSession({ transcript: current + finalText })
+      if (sessionFinal && sessionFinal !== committedRef.current) {
+        const newText = sessionFinal.slice(committedRef.current.length)
+        if (newText.trim()) {
+          const current = useSession.getState().activeSession?.transcript ?? ''
+          updateActiveSession({ transcript: current + newText })
+        }
+        committedRef.current = sessionFinal
       }
     }
 
     recognition.onerror = (e: Event & { error: string }) => {
-      if (e.error !== 'no-speech') toast(`Recognition error: ${e.error}`)
+      if (e.error === 'no-speech') return
+      if (e.error === 'network') {
+        toast('No internet — recording audio only', 'error')
+      } else if (e.error === 'not-allowed') {
+        toast('Microphone access denied — check browser permissions', 'error')
+        stopRecognition()
+        setRecording(false)
+      } else {
+        toast(`Recognition error: ${e.error}`, 'error')
+      }
     }
 
     recognition.onend = () => {
-      if (activeRef.current) recognition.start()
+      if (activeRef.current) {
+        committedRef.current = ''
+        recognition.start()
+      }
     }
 
     recognitionRef.current = recognition
     activeRef.current = true
+    committedRef.current = ''
     recognition.start()
     setRecSeconds(0)
     setRecording(true)
