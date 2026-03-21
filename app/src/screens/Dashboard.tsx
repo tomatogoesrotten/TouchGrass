@@ -46,11 +46,13 @@ export function Dashboard() {
         <div className="max-w-[1400px] mx-auto px-6 h-16 flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <img
-              src="/touchgrass.png"
-              alt="TouchGrass"
-              className="w-9 h-9 rounded-[10px] object-cover"
-            />
+            <div className="w-9 h-9 rounded-[10px] overflow-hidden flex-shrink-0">
+              <img
+                src="/touchgrass.png"
+                alt="TouchGrass"
+                className="w-full h-full object-cover scale-[1.35]"
+              />
+            </div>
             <span className="text-[17px] font-bold tracking-tight" style={{ color: textPrimary }}>
               TouchGrass
             </span>
