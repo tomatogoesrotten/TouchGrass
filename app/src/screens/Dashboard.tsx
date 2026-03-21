@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Plus, Search, X, Zap, BarChart3, Globe2, CalendarDays } from 'lucide-react'
+import { Plus, Search, X, BarChart3, Globe2, CalendarDays } from 'lucide-react'
 import { useTheme } from '@/stores/theme'
 import { useSession } from '@/stores/session'
 import type { Phase } from '@/stores/session'
@@ -46,14 +46,13 @@ export function Dashboard() {
         <div className="max-w-[1400px] mx-auto px-6 h-16 flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <div
-              className="w-9 h-9 rounded-[10px] flex items-center justify-center"
-              style={{ backgroundColor: accent }}
-            >
-              <Zap size={18} color="#fff" fill="#fff" />
-            </div>
+            <img
+              src="/touchgrass.png"
+              alt="TouchGrass"
+              className="w-9 h-9 rounded-[10px] object-cover"
+            />
             <span className="text-[17px] font-bold tracking-tight" style={{ color: textPrimary }}>
-              Field Companion
+              TouchGrass
             </span>
           </div>
 
