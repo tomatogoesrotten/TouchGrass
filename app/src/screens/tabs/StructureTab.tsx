@@ -44,7 +44,7 @@ export function StructureTab() {
         <div
           className="flex flex-col items-center gap-4 py-8 rounded-[16px]"
           style={{
-            backgroundColor: isDark ? 'var(--color-surface-high)' : 'var(--color-surface-light-mid)',
+            backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
             border: `1px solid ${border}`,
           }}
         >

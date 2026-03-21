@@ -50,7 +50,7 @@ export function QuestionsTab() {
               const c = isDark ? color.dark : color.light
               return (
                 <div key={cat} className="p-4 space-y-3 relative overflow-hidden rounded-[14px]" style={{
-                  backgroundColor: isDark ? 'var(--color-surface-high)' : 'var(--color-surface-light-mid)',
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
                   border: `1px solid ${border}`
                 }}>
                   <div className="absolute top-0 left-0 w-1 h-full rounded-r-full" style={{ backgroundColor: c }} />
@@ -73,7 +73,7 @@ export function QuestionsTab() {
             onClick={handleGenerate}
             className="px-5 py-2.5 rounded-[12px] font-semibold text-sm flex items-center gap-2.5 transition-all hover:brightness-110"
             style={{
-              backgroundColor: isDark ? 'var(--color-surface-high)' : '#f4f4f5',
+              backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
               color: textPrimary,
               border: `1px solid ${border}`,
             }}

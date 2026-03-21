@@ -24,7 +24,7 @@ export function NotesTab() {
       <textarea
         className="flex-1 w-full border-none rounded-[16px] px-5 py-4 text-[15px] leading-[1.8] outline-none resize-none transition-all"
         style={{
-          backgroundColor: isDark ? 'var(--color-surface-high)' : 'var(--color-surface-light-mid)',
+          backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
           color: isDark ? '#fafafa' : '#09090b',
           border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
         }}

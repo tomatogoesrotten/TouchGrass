@@ -39,7 +39,7 @@ export function SolutionsTab() {
       <div className="flex-1 overflow-y-auto space-y-6 pr-2" style={{ scrollbarWidth: 'thin', scrollbarColor: `${textMuted} transparent` }}>
         {/* Private Card */}
         <div className="p-5 rounded-[16px] overflow-hidden" style={{ 
-          backgroundColor: isDark ? 'var(--color-surface-high)' : 'var(--color-surface-light-mid)',
+          backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
           border: `1px solid ${border}`,
           borderLeft: `3px solid ${warnColor}` 
         }}>

@@ -46,7 +46,7 @@ export function DomainTab() {
           <div
             className="flex-1 rounded-[12px] flex items-center px-4"
             style={{
-              backgroundColor: isDark ? 'var(--color-surface-high)' : '#ffffff',
+              backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
               border: `1px solid ${border}`,
             }}
           >

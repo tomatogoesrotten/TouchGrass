@@ -86,7 +86,7 @@ export function RecordTab() {
                 key={label}
                 className="px-4 py-2 rounded-[100px] cursor-pointer transition-all text-[13px] font-medium flex items-center gap-2 hover:brightness-110"
                 style={{
-                  backgroundColor: isDark ? 'var(--color-surface-high)' : 'var(--color-surface-light-mid)',
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
                   color: textPrimary,
                   border: `1px solid ${border}`,
                 }}
@@ -105,7 +105,7 @@ export function RecordTab() {
               key={tag.id}
               className="p-4 rounded-[14px] flex items-center justify-between group"
               style={{
-                backgroundColor: isDark ? 'var(--color-surface-high)' : 'var(--color-surface-light-mid)',
+                backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
                 border: `1px solid ${border}`,
               }}
             >
@@ -141,11 +141,11 @@ export function RecordTab() {
               Real-time
             </span>
           </div>
-          <div className="h-[200px] p-5 overflow-y-auto space-y-5 rounded-[16px]" style={{ backgroundColor: isDark ? 'var(--color-surface-high)' : 'var(--color-surface-light-mid)', border: `1px solid ${border}` }}>
+          <div className="h-[200px] p-5 overflow-y-auto space-y-5 rounded-[16px]" style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', border: `1px solid ${border}` }}>
             <div className="flex gap-4">
               <div
                 className="w-10 h-7 rounded-[8px] flex-shrink-0 flex items-center justify-center font-mono text-[10px] font-medium"
-                style={{ backgroundColor: isDark ? '#333333' : '#d4d4d8', color: textMuted }}
+                style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', color: textMuted }}
               >
                 01:12
               </div>
@@ -156,7 +156,7 @@ export function RecordTab() {
             <div className="flex gap-4">
               <div
                 className="w-10 h-7 rounded-[8px] flex-shrink-0 flex items-center justify-center font-mono text-[10px] font-medium"
-                style={{ backgroundColor: isDark ? '#333333' : '#d4d4d8', color: textMuted }}
+                style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', color: textMuted }}
               >
                 02:10
               </div>
