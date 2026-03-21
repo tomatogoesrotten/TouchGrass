@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Plus, Search, X, Zap, BarChart3, Globe2, CalendarDays, ArrowUpRight } from 'lucide-react'
+import { Plus, Search, X, Zap, BarChart3, Globe2, CalendarDays } from 'lucide-react'
 import { useTheme } from '@/stores/theme'
 import { useSession } from '@/stores/session'
 import type { Phase } from '@/stores/session'
@@ -169,9 +169,9 @@ export function Dashboard() {
           <div className="lg:col-span-8 flex flex-col">
             <GlassCard className="p-6 h-full min-h-[600px] flex flex-col">
               {/* Search & Filters */}
-              <div className="flex flex-col md:flex-row gap-4 mb-6 items-start md:items-center justify-between">
+              <div className="flex flex-col gap-4 mb-6">
                 <div
-                  className="relative w-full md:w-80 rounded-[12px] flex items-center"
+                  className="relative w-full rounded-[12px] flex items-center"
                   style={{ backgroundColor: isDark ? 'var(--color-surface-mid)' : 'var(--color-surface-light-mid)', border: `1px solid ${border}` }}
                 >
                   <Search size={16} className="absolute left-4" color={textMuted} />
@@ -183,13 +183,13 @@ export function Dashboard() {
                     onChange={(e) => setSearch(e.target.value)}
                   />
                 </div>
-                <div className="flex flex-wrap gap-2 items-center bg-black/5 dark:bg-white/5 p-1.5 rounded-2xl md:rounded-[100px]" style={{ border: `1px solid ${border}` }}>
+                <div className="flex flex-wrap gap-2 items-center">
                   <button
                     className="px-4 py-1.5 rounded-[100px] text-[12px] font-semibold transition-all"
                     style={{
                       backgroundColor: filter === 'all' ? (isDark ? '#262626' : '#ffffff') : 'transparent',
                       color: filter === 'all' ? (isDark ? '#fafafa' : '#09090b') : textMuted,
-                      boxShadow: filter === 'all' ? '0 2px 8px rgba(0,0,0,0.1)' : 'none',
+                      border: `1px solid ${filter === 'all' ? (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)') : border}`,
                     }}
                     onClick={() => setFilter('all')}
                   >
@@ -203,9 +203,9 @@ export function Dashboard() {
                         key={phase}
                         className="px-4 py-1.5 rounded-[100px] text-[12px] font-semibold transition-all flex items-center gap-1.5"
                         style={{
-                          backgroundColor: isActive ? (isDark ? '#262626' : '#ffffff') : 'transparent',
+                          backgroundColor: isActive ? `${color}18` : 'transparent',
                           color: isActive ? color : textMuted,
-                          boxShadow: isActive ? '0 2px 8px rgba(0,0,0,0.1)' : 'none',
+                          border: `1px solid ${isActive ? `${color}40` : border}`,
                         }}
                         onClick={() => setFilter(isActive ? 'all' : phase)}
                       >
@@ -243,9 +243,9 @@ export function Dashboard() {
                             : '0 12px 32px rgba(0,0,0,0.06)',
                         }}
                       >
-                        {/* Delete button */}
+                        {/* Delete button — only on hover */}
                         <button
-                          className="absolute top-4 right-10 opacity-0 group-hover:opacity-100 transition-all w-7 h-7 rounded-[8px] flex items-center justify-center z-10"
+                          className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-all w-7 h-7 rounded-[8px] flex items-center justify-center z-10"
                           style={{
                             backgroundColor: isDark ? 'rgba(255,77,106,0.1)' : 'rgba(229,56,75,0.08)',
                             color: isDark ? 'var(--color-danger-dark)' : 'var(--color-danger-light)',
@@ -259,9 +259,8 @@ export function Dashboard() {
                         </button>
 
                         <div className="p-6">
-                          <div className="flex items-center justify-between mb-5">
+                          <div className="flex items-center mb-5">
                             <PhaseBadge phase={session.phase} />
-                            <ArrowUpRight size={16} color={textMuted} className="opacity-0 group-hover:opacity-100 transition-opacity absolute top-4 right-4" />
                           </div>
                           <h3
                             className="text-[16px] font-bold tracking-tight mb-1"

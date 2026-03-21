@@ -106,11 +106,11 @@ export function Session() {
           
           {/* Main left column (8 cols) */}
           <div className="lg:col-span-8 flex flex-col gap-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 min-h-[400px] md:h-[400px]">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 auto-rows-[minmax(400px,auto)]">
                <RecordTab />
                <NotesTab />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 min-h-[400px] md:h-[400px]">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 auto-rows-[minmax(400px,auto)]">
                <StructureTab />
                <QuestionsTab />
             </div>
@@ -118,10 +118,10 @@ export function Session() {
           
           {/* Right column (4 cols) */}
           <div className="lg:col-span-4 flex flex-col gap-6">
-            <div className="min-h-[400px] md:h-[400px]">
+            <div className="min-h-[400px]">
               <DomainTab />
             </div>
-            <div className="min-h-[400px] md:h-[400px]">
+            <div className="min-h-[400px]">
               <SolutionsTab />
             </div>
           </div>
