@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowRight, UserPlus } from 'lucide-react'
 import { useTheme } from '@/stores/theme'
 import { useSession } from '@/stores/session'
 import type { Phase } from '@/stores/session'
+import { useToast } from '@/stores/toast'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { PrimaryBtn } from '@/components/ui/PrimaryBtn'
@@ -24,12 +25,13 @@ export function Setup() {
   const theme = useTheme((s) => s.theme)
   const isDark = theme === 'dark'
   const addSession = useSession((s) => s.addSession)
-  const setActiveSession = useSession((s) => s.setActiveSession)
+  const toast = useToast((s) => s.show)
 
   const [client, setClient] = useState('')
   const [industry, setIndustry] = useState('')
   const [attendees, setAttendees] = useState('')
   const [selectedPhase, setSelectedPhase] = useState<Phase | null>(null)
+  const [submitting, setSubmitting] = useState(false)
 
   const isValid = client.trim() && industry && selectedPhase
 
@@ -39,18 +41,21 @@ export function Setup() {
   const accent = isDark ? '#10b981' : '#059669'
   const border = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'
 
-  function handleSubmit() {
-    if (!isValid || !selectedPhase) return
-    const session = { client, industry, phase: selectedPhase, attendees }
-    addSession(session)
-    const store = useSession.getState()
-    setActiveSession(store.sessions[0])
-    navigate('/session')
+  async function handleSubmit() {
+    if (!isValid || !selectedPhase || submitting) return
+    setSubmitting(true)
+    try {
+      const session = await addSession({ client, industry, phase: selectedPhase, attendees })
+      useSession.setState({ activeSession: session })
+      navigate('/session')
+    } catch {
+      toast('Failed to create session')
+      setSubmitting(false)
+    }
   }
 
   return (
     <main className="max-w-[540px] mx-auto px-6 pt-12 pb-24 relative" style={{ zIndex: 1 }}>
-      {/* Nav */}
       <header className="flex justify-between items-center mb-10">
         <button
           onClick={() => navigate('/')}
@@ -62,7 +67,6 @@ export function Setup() {
         <ThemeToggle />
       </header>
 
-      {/* Title */}
       <section className="mb-10">
         <h1 className="text-[28px] font-bold tracking-tight" style={{ color: textPrimary }}>
           New Session
@@ -73,7 +77,6 @@ export function Setup() {
       </section>
 
       <div className="space-y-8">
-        {/* Form Card */}
         <GlassCard className="p-7">
           <div className="space-y-5">
             <div className="space-y-2">
@@ -112,7 +115,6 @@ export function Setup() {
           </div>
         </GlassCard>
 
-        {/* Phase Selector */}
         <div className="space-y-3">
           <label className="block text-[11px] font-semibold uppercase tracking-widest px-0.5" style={{ color: textMuted }}>
             Engagement Phase
@@ -152,14 +154,13 @@ export function Setup() {
           </div>
         </div>
 
-        {/* Start Button */}
         <div className="pt-2">
           <PrimaryBtn
             className="w-full h-[48px] text-sm font-bold"
-            disabled={!isValid}
+            disabled={!isValid || submitting}
             onClick={handleSubmit}
           >
-            Start Session <ArrowRight size={16} />
+            {submitting ? 'Creating...' : 'Start Session'} <ArrowRight size={16} />
           </PrimaryBtn>
         </div>
       </div>

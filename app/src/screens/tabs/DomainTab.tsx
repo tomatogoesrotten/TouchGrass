@@ -3,7 +3,9 @@ import { Globe, Search, BookOpen } from 'lucide-react'
 import { useTheme } from '@/stores/theme'
 import { useSession } from '@/stores/session'
 import { useToast } from '@/stores/toast'
+import { api } from '@/lib/api'
 import { AIResultBox } from '@/components/ui/AIResultBox'
+import { LoadingBar } from '@/components/ui/LoadingBar'
 import { GlassCard } from '@/components/ui/GlassCard'
 
 export function DomainTab() {
@@ -12,18 +14,26 @@ export function DomainTab() {
   const activeSession = useSession((s) => s.activeSession)
   const toast = useToast((s) => s.show)
   const [query, setQuery] = useState('')
-  const [showResult, setShowResult] = useState(false)
+  const [result, setResult] = useState('')
+  const [loading, setLoading] = useState(false)
 
   const textPrimary = isDark ? '#fafafa' : '#09090b'
   const textSoft = isDark ? '#a1a1aa' : '#52525b'
   const textMuted = isDark ? '#71717a' : '#a1a1aa'
   const border = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'
 
-  function handleLookup() {
-    setTimeout(() => {
-      setShowResult(true)
+  async function handleLookup() {
+    if (!activeSession || !query.trim()) return
+    setLoading(true)
+    try {
+      const data = await api.aiDomain(activeSession.id, query.trim())
+      setResult(data.result)
       toast('Domain intelligence loaded')
-    }, 1200)
+    } catch {
+      toast('Lookup failed — try again')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -57,35 +67,33 @@ export function DomainTab() {
               placeholder="Enter industry term or topic..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleLookup()}
             />
           </div>
           <button
-            className="px-5 py-2.5 rounded-[12px] font-semibold text-sm flex items-center gap-2 transition-all hover:brightness-110"
+            className="px-5 py-2.5 rounded-[12px] font-semibold text-sm flex items-center gap-2 transition-all hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed"
             style={{
               backgroundColor: isDark ? 'var(--color-surface-highest)' : '#f4f4f5',
               color: textPrimary,
               border: `1px solid ${border}`,
             }}
             onClick={handleLookup}
+            disabled={loading || !query.trim()}
           >
             <Search size={14} />
             Look Up
           </button>
         </div>
 
-        <AIResultBox title="Domain Intelligence" visible={showResult}>
-          <div className="space-y-3 text-sm leading-relaxed" style={{ color: textSoft }}>
-            <p>
-              <strong style={{ color: textPrimary }}>{activeSession?.industry ?? 'Cloud Infrastructure'}</strong> market
-              is projected to reach $1.2T by 2028. Key players include hyperscalers (AWS, Azure, GCP) and emerging
-              multi-cloud orchestration platforms.
-            </p>
-            <p>
-              Current trends: edge computing adoption, serverless architectures, AI-optimized infrastructure, and
-              sustainability-driven data center innovations.
-            </p>
-          </div>
-        </AIResultBox>
+        <LoadingBar visible={loading} />
+
+        {result && (
+          <AIResultBox title="Domain Intelligence" visible>
+            <div className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: textSoft }}>
+              {result}
+            </div>
+          </AIResultBox>
+        )}
       </div>
     </GlassCard>
   )

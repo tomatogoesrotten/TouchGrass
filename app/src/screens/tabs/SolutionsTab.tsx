@@ -1,30 +1,42 @@
 import { useState } from 'react'
 import { Shield, Lock } from 'lucide-react'
 import { useTheme } from '@/stores/theme'
+import { useSession } from '@/stores/session'
 import { useToast } from '@/stores/toast'
+import { api } from '@/lib/api'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { PrimaryBtn } from '@/components/ui/PrimaryBtn'
 import { AIResultBox } from '@/components/ui/AIResultBox'
+import { LoadingBar } from '@/components/ui/LoadingBar'
 
 export function SolutionsTab() {
   const theme = useTheme((s) => s.theme)
   const isDark = theme === 'dark'
+  const { activeSession, updateActiveSession } = useSession()
   const toast = useToast((s) => s.show)
-  const [text, setText] = useState('')
-  const [showResult, setShowResult] = useState(false)
+  const [loading, setLoading] = useState(false)
 
   const textPrimary = isDark ? '#fafafa' : '#09090b'
   const textSoft = isDark ? '#a1a1aa' : '#52525b'
   const textMuted = isDark ? '#71717a' : '#a1a1aa'
   const warnColor = isDark ? 'var(--color-warn-dark)' : 'var(--color-warn-light)'
-  const accent = isDark ? 'var(--color-accent-dark)' : 'var(--color-accent-light)'
   const border = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'
 
-  function handleReview() {
-    setTimeout(() => {
-      setShowResult(true)
+  const text = activeSession?.privateSolutions ?? ''
+  const feedback = activeSession?.aiSolutionFeedback ?? ''
+
+  async function handleReview() {
+    if (!activeSession) return
+    setLoading(true)
+    try {
+      const { result } = await api.aiSolutions(activeSession.id)
+      updateActiveSession({ aiSolutionFeedback: result })
       toast('AI analysis complete')
-    }, 1500)
+    } catch {
+      toast('AI request failed — try again')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -37,7 +49,6 @@ export function SolutionsTab() {
       </div>
 
       <div className="flex-1 overflow-y-auto space-y-6 pr-2" style={{ scrollbarWidth: 'thin', scrollbarColor: `${textMuted} transparent` }}>
-        {/* Private Card */}
         <div className="p-5 rounded-[16px] overflow-hidden" style={{ 
           backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
           border: `1px solid ${border}`,
@@ -59,38 +70,27 @@ export function SolutionsTab() {
             style={{ color: textPrimary }}
             placeholder="Draft your solution hypothesis here... The AI will help refine these into professional deliverables."
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={(e) => updateActiveSession({ privateSolutions: e.target.value })}
           />
-          <div className="flex justify-end mt-4">
-            <PrimaryBtn className="px-5 py-2.5 text-sm" onClick={handleReview}>
+          <div className="flex items-center justify-end gap-3 mt-4">
+            <LoadingBar visible={loading} />
+            <PrimaryBtn
+              className="px-5 py-2.5 text-sm"
+              onClick={handleReview}
+              disabled={loading || !text.trim()}
+            >
               Review My Ideas
             </PrimaryBtn>
           </div>
         </div>
 
-        {/* AI Result */}
-        <AIResultBox title="AI Analysis & Refinement" visible={showResult}>
-          <div className="grid md:grid-cols-2 gap-3">
-            {[
-              { num: '01', text: 'Map technical requirements to existing infrastructure to reduce friction in Phase 2.' },
-              { num: '02', text: "Budget allocation aligns with client's fiscal Q3 constraints identified in notes." },
-            ].map((item) => (
-              <div
-                key={item.num}
-                className="p-4 rounded-[14px]"
-                style={{
-                  backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
-                  border: `1px solid ${border}`,
-                }}
-              >
-                <span className="font-mono text-[10px] font-semibold" style={{ color: accent }}>
-                  Optimization {item.num}
-                </span>
-                <p className="text-sm mt-2 leading-relaxed" style={{ color: textSoft }}>{item.text}</p>
-              </div>
-            ))}
-          </div>
-        </AIResultBox>
+        {feedback && (
+          <AIResultBox title="AI Analysis & Refinement" visible>
+            <div className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: textSoft }}>
+              {feedback}
+            </div>
+          </AIResultBox>
+        )}
       </div>
     </GlassCard>
   )

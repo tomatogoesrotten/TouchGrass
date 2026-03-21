@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Trash2 } from 'lucide-react'
 import { useTheme } from '@/stores/theme'
@@ -12,6 +13,20 @@ export function DeleteModal() {
   const toast = useToast((s) => s.show)
   const isDark = theme === 'dark'
   const dangerColor = isDark ? '#ef4444' : '#dc2626'
+  const [deleting, setDeleting] = useState(false)
+
+  async function handleDelete() {
+    if (!deleteTarget || deleting) return
+    setDeleting(true)
+    try {
+      await removeSession(deleteTarget.id)
+      toast('Session deleted')
+    } catch {
+      toast('Failed to delete session')
+    } finally {
+      setDeleting(false)
+    }
+  }
 
   return (
     <AnimatePresence>
@@ -90,12 +105,10 @@ export function DeleteModal() {
                 </SecondaryBtn>
                 <DangerBtn
                   className="flex-1 h-[44px] text-sm"
-                  onClick={() => {
-                    removeSession(deleteTarget.id)
-                    toast('Session deleted')
-                  }}
+                  disabled={deleting}
+                  onClick={handleDelete}
                 >
-                  Delete
+                  {deleting ? 'Deleting...' : 'Delete'}
                 </DangerBtn>
               </div>
             </div>

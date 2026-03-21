@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Plus, Search, X, BarChart3, Globe2, CalendarDays } from 'lucide-react'
@@ -17,21 +17,42 @@ export function Dashboard() {
   const navigate = useNavigate()
   const theme = useTheme((s) => s.theme)
   const isDark = theme === 'dark'
-  const { sessions, setActiveSession, setDeleteTarget } = useSession()
+  const { sessions, loadSessions, setDeleteTarget, loadFullSession } = useSession()
   const [filter, setFilter] = useState<Filter>('all')
   const [search, setSearch] = useState('')
 
+  useEffect(() => {
+    loadSessions()
+  }, [loadSessions])
+
   const filtered = sessions.filter((s) => {
     if (filter !== 'all' && s.phase !== filter) return false
-    if (search && !s.client.toLowerCase().includes(search.toLowerCase())) return false
+    if (search) {
+      const q = search.toLowerCase()
+      if (!s.client.toLowerCase().includes(q) && !s.industry.toLowerCase().includes(q)) return false
+    }
     return true
   })
+
+  const now = Date.now()
+  const weekMs = 7 * 24 * 60 * 60 * 1000
+  const thisWeek = sessions.filter((s) => {
+    const updated = s.updatedAt ? new Date(s.updatedAt).getTime() : 0
+    return now - updated < weekMs
+  }).length
+
+  const uniqueIndustries = new Set(sessions.map((s) => s.industry)).size
 
   const accent = isDark ? '#10b981' : '#059669'
   const textPrimary = isDark ? '#fafafa' : '#09090b'
   const textSoft = isDark ? '#a1a1aa' : '#52525b'
   const textMuted = isDark ? '#71717a' : '#a1a1aa'
   const border = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'
+
+  function handleOpenSession(session: typeof sessions[0]) {
+    loadFullSession(session.id)
+    navigate('/session')
+  }
 
   return (
     <div className="min-h-screen relative" style={{ zIndex: 1 }}>
@@ -44,7 +65,6 @@ export function Dashboard() {
         }}
       >
         <div className="max-w-[1400px] mx-auto px-6 h-16 flex items-center justify-between">
-          {/* Logo */}
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-[10px] overflow-hidden flex-shrink-0">
               <img
@@ -58,7 +78,6 @@ export function Dashboard() {
             </span>
           </div>
 
-          {/* Center Pill Nav */}
           <nav
             className="hidden md:flex items-center gap-1 rounded-[100px] p-1"
             style={{ backgroundColor: isDark ? '#18181b' : '#ffffff', border: `1px solid ${border}` }}
@@ -77,7 +96,6 @@ export function Dashboard() {
             ))}
           </nav>
 
-          {/* Right Actions */}
           <div className="flex items-center gap-3">
             <ThemeToggle />
             <PrimaryBtn className="px-4 py-2 h-9 text-[13px]" onClick={() => navigate('/setup')}>
@@ -116,7 +134,7 @@ export function Dashboard() {
                 },
                 {
                   label: 'This Week',
-                  value: '42',
+                  value: thisWeek.toString(),
                   change: 'Trending up',
                   changeColor: isDark ? '#ff8a00' : '#e67d00',
                   icon: CalendarDays,
@@ -158,7 +176,7 @@ export function Dashboard() {
                 </div>
               </div>
               <div className="text-[32px] font-bold tracking-tight leading-none" style={{ color: textPrimary }}>
-                18
+                {uniqueIndustries}
               </div>
               <span className="text-xs font-medium mt-2 inline-block" style={{ color: textSoft }}>
                 Global coverage
@@ -236,10 +254,7 @@ export function Dashboard() {
                             ? '0 4px 20px -4px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04)'
                             : '0 4px 20px -4px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.6)',
                         }}
-                        onClick={() => {
-                          setActiveSession(session)
-                          navigate('/session')
-                        }}
+                        onClick={() => handleOpenSession(session)}
                         whileHover={{
                           scale: 1.03,
                           boxShadow: isDark
@@ -247,7 +262,6 @@ export function Dashboard() {
                             : '0 20px 40px -8px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.8)',
                         }}
                       >
-                        {/* Delete button — only on hover */}
                         <button
                           className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-all w-7 h-7 rounded-[8px] flex items-center justify-center z-10"
                           style={{
@@ -264,7 +278,7 @@ export function Dashboard() {
 
                         <div className="p-6">
                           <div className="flex items-center mb-5">
-                            <PhaseBadge phase={session.phase} />
+                            <PhaseBadge phase={session.phase as Phase} />
                           </div>
                           <h3
                             className="text-[16px] font-bold tracking-tight mb-1"
@@ -291,7 +305,6 @@ export function Dashboard() {
                     )
                   })}
 
-                  {/* Empty State */}
                   {filtered.length === 0 && (
                     <div
                       className="rounded-[20px] flex flex-col items-center justify-center p-12 min-h-[280px] col-span-full"

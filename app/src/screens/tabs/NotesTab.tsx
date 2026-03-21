@@ -1,12 +1,15 @@
-import { useState } from 'react'
 import { FileText } from 'lucide-react'
 import { useTheme } from '@/stores/theme'
+import { useSession } from '@/stores/session'
 import { GlassCard } from '@/components/ui/GlassCard'
 
 export function NotesTab() {
   const theme = useTheme((s) => s.theme)
   const isDark = theme === 'dark'
-  const [text, setText] = useState('')
+  const { activeSession, updateActiveSession } = useSession()
+
+  const text = activeSession?.manualNotes ?? ''
+  const hasTranscript = !!activeSession?.transcript
 
   const wordCount = text.trim().split(/\s+/).filter(Boolean).length
   const textMuted = isDark ? '#71717a' : '#a1a1aa'
@@ -30,7 +33,7 @@ export function NotesTab() {
         }}
         placeholder={'Start typing your session notes here...\n\nUse this space to capture key observations, client requirements, and action items from the visit.'}
         value={text}
-        onChange={(e) => setText(e.target.value)}
+        onChange={(e) => updateActiveSession({ manualNotes: e.target.value })}
       />
       <div className="flex items-center justify-between px-1 mt-3 flex-shrink-0">
         <span className="text-[11px] font-mono" style={{ color: textMuted }}>
@@ -43,7 +46,7 @@ export function NotesTab() {
             color: 'var(--color-accent-dark)',
           }}
         >
-          Transcript available
+          {hasTranscript ? 'Transcript available' : 'No transcript yet'}
         </span>
       </div>
     </GlassCard>

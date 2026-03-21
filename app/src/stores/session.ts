@@ -1,4 +1,6 @@
 import { create } from 'zustand'
+import { api } from '@/lib/api'
+import type { SessionFull, SessionMeta, QuickTag } from '@/lib/api'
 
 export type Phase = 'requirements' | 'follow-up' | 'demo' | 'troubleshoot'
 
@@ -9,88 +11,178 @@ export interface Session {
   phase: Phase
   date: string
   time: string
-  attendees?: string
+  attendees: string
+  transcript: string
+  manualNotes: string
+  quickTags: QuickTag[]
+  structuredNotes: string
+  aiQuestions: string
+  privateSolutions: string
+  aiSolutionFeedback: string
+  createdAt?: string
+  updatedAt?: string
 }
 
-export interface Tag {
-  id: string
-  time: string
-  label: string
-  emoji: string
-  note: string
-}
+export type { QuickTag }
 
 interface SessionStore {
-  sessions: Session[]
+  sessions: SessionMeta[]
   activeSession: Session | null
-  tags: Tag[]
   isRecording: boolean
   recSeconds: number
   activeTab: string
-  deleteTarget: Session | null
-  addSession: (s: Omit<Session, 'id' | 'date' | 'time'>) => void
-  removeSession: (id: string) => void
-  setActiveSession: (s: Session | null) => void
+  deleteTarget: SessionMeta | null
+  loading: boolean
+
+  loadSessions: () => Promise<void>
+  addSession: (s: { client: string; industry: string; phase: string; attendees?: string }) => Promise<Session>
+  removeSession: (id: string) => Promise<void>
+  setActiveSession: (s: SessionMeta | null) => void
+  loadFullSession: (id: string) => Promise<void>
+  updateActiveSession: (fields: Partial<Session>) => void
+  saveActiveSession: () => Promise<void>
   addTag: (label: string, emoji: string) => void
   removeTag: (id: string) => void
   setRecording: (v: boolean) => void
   setRecSeconds: (v: number) => void
   setActiveTab: (tab: string) => void
-  setDeleteTarget: (s: Session | null) => void
+  setDeleteTarget: (s: SessionMeta | null) => void
 }
 
-const defaultSessions: Session[] = [
-  { id: '1', client: 'Aether Dynamics', industry: 'Cloud Infrastructure', phase: 'requirements', date: '2025.10.24', time: '14:20' },
-  { id: '2', client: 'Luminal Systems', industry: 'Autonomous Logistics', phase: 'demo', date: '2025.10.23', time: '09:15' },
-  { id: '3', client: 'Vertex Global', industry: 'Financial Services', phase: 'follow-up', date: '2025.10.22', time: '16:45' },
-  { id: '4', client: 'Nexus Data', industry: 'Infrastructure', phase: 'troubleshoot', date: '2025.10.21', time: '11:30' },
-  { id: '5', client: 'Horizon Fintech', industry: 'Banking Solutions', phase: 'requirements', date: '2025.10.19', time: '08:00' },
-]
+let saveTimer: ReturnType<typeof setTimeout> | null = null
 
-const defaultTags: Tag[] = [
-  { id: 't1', time: '04:02', label: 'Important', emoji: '⚠️', note: 'Thermal tolerance for core assembly' },
-  { id: 't2', time: '03:45', label: 'Decision', emoji: '✅', note: 'Switch to titanium alloy outer ring' },
-]
-
-let tagCounter = 3
+function toSession(data: SessionFull): Session {
+  return {
+    id: data.id,
+    client: data.client,
+    industry: data.industry,
+    phase: data.phase as Phase,
+    date: data.date,
+    time: data.time,
+    attendees: data.attendees ?? '',
+    transcript: data.transcript ?? '',
+    manualNotes: data.manualNotes ?? '',
+    quickTags: data.quickTags ?? [],
+    structuredNotes: data.structuredNotes ?? '',
+    aiQuestions: data.aiQuestions ?? '',
+    privateSolutions: data.privateSolutions ?? '',
+    aiSolutionFeedback: data.aiSolutionFeedback ?? '',
+    createdAt: data.createdAt,
+    updatedAt: data.updatedAt,
+  }
+}
 
 export const useSession = create<SessionStore>((set, get) => ({
-  sessions: defaultSessions,
+  sessions: [],
   activeSession: null,
-  tags: defaultTags,
   isRecording: false,
   recSeconds: 0,
   activeTab: 'record',
   deleteTarget: null,
+  loading: false,
 
-  addSession: (s) => {
-    const now = new Date()
-    const date = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}.${String(now.getDate()).padStart(2, '0')}`
-    const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`
-    const session: Session = { ...s, id: crypto.randomUUID(), date, time }
-    set((state) => ({ sessions: [session, ...state.sessions] }))
+  loadSessions: async () => {
+    set({ loading: true })
+    try {
+      const sessions = await api.listSessions()
+      set({ sessions, loading: false })
+    } catch (err) {
+      console.error('Failed to load sessions:', err)
+      set({ loading: false })
+    }
   },
 
-  removeSession: (id) =>
-    set((state) => ({ sessions: state.sessions.filter((s) => s.id !== id), deleteTarget: null })),
+  addSession: async (s) => {
+    const data = await api.createSession(s)
+    const session = toSession(data)
+    set((state) => ({
+      sessions: [
+        { id: session.id, client: session.client, industry: session.industry, phase: session.phase, date: session.date, time: session.time, updatedAt: session.updatedAt ?? '' },
+        ...state.sessions,
+      ],
+    }))
+    return session
+  },
 
-  setActiveSession: (s) => set({ activeSession: s, activeTab: 'record' }),
+  removeSession: async (id) => {
+    await api.deleteSession(id)
+    set((state) => ({
+      sessions: state.sessions.filter((s) => s.id !== id),
+      deleteTarget: null,
+    }))
+  },
+
+  setActiveSession: (s) => {
+    if (!s) {
+      set({ activeSession: null, activeTab: 'record' })
+      return
+    }
+    set({ activeTab: 'record' })
+  },
+
+  loadFullSession: async (id) => {
+    try {
+      const data = await api.getSession(id)
+      set({ activeSession: toSession(data), activeTab: 'record' })
+    } catch (err) {
+      console.error('Failed to load session:', err)
+    }
+  },
+
+  updateActiveSession: (fields) => {
+    const current = get().activeSession
+    if (!current) return
+    set({ activeSession: { ...current, ...fields } })
+
+    if (saveTimer) clearTimeout(saveTimer)
+    saveTimer = setTimeout(() => {
+      get().saveActiveSession()
+    }, 1000)
+  },
+
+  saveActiveSession: async () => {
+    const session = get().activeSession
+    if (!session) return
+    try {
+      await api.updateSession(session.id, {
+        transcript: session.transcript,
+        manualNotes: session.manualNotes,
+        quickTags: session.quickTags,
+        structuredNotes: session.structuredNotes,
+        aiQuestions: session.aiQuestions,
+        privateSolutions: session.privateSolutions,
+        aiSolutionFeedback: session.aiSolutionFeedback,
+      } as Partial<Session>)
+    } catch (err) {
+      console.error('Auto-save failed:', err)
+    }
+  },
 
   addTag: (label, emoji) => {
+    const session = get().activeSession
+    if (!session) return
     const secs = get().recSeconds
     const m = String(Math.floor(secs / 60)).padStart(2, '0')
     const s = String(secs % 60).padStart(2, '0')
-    const tag: Tag = {
-      id: `t${tagCounter++}`,
+    const tag: QuickTag = {
+      id: `t${Date.now()}`,
       time: get().isRecording ? `${m}:${s}` : '--:--',
       label,
       emoji,
       note: 'Tagged moment',
     }
-    set((state) => ({ tags: [tag, ...state.tags] }))
+    const quickTags = [tag, ...session.quickTags]
+    get().updateActiveSession({ quickTags })
   },
 
-  removeTag: (id) => set((state) => ({ tags: state.tags.filter((t) => t.id !== id) })),
+  removeTag: (id) => {
+    const session = get().activeSession
+    if (!session) return
+    get().updateActiveSession({
+      quickTags: session.quickTags.filter((t) => t.id !== id),
+    })
+  },
+
   setRecording: (v) => set({ isRecording: v }),
   setRecSeconds: (v) => set({ recSeconds: v }),
   setActiveTab: (tab) => set({ activeTab: tab }),

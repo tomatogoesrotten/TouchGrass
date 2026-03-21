@@ -1,3 +1,4 @@
+import { useRef, useCallback, useEffect } from 'react'
 import { X, Mic } from 'lucide-react'
 import { useTheme } from '@/stores/theme'
 import { useSession } from '@/stores/session'
@@ -12,11 +13,18 @@ const quickTags = [
   { label: 'Unclear', emoji: '🤔' },
 ]
 
+type SpeechRecognitionEvent = Event & { results: SpeechRecognitionResultList; resultIndex: number }
+
 export function RecordTab() {
   const theme = useTheme((s) => s.theme)
   const isDark = theme === 'dark'
-  const { isRecording, setRecording, setRecSeconds, tags, addTag, removeTag } = useSession()
+  const {
+    activeSession, isRecording, setRecording, setRecSeconds,
+    addTag, removeTag, updateActiveSession,
+  } = useSession()
   const toast = useToast((s) => s.show)
+  const recognitionRef = useRef<InstanceType<typeof window.SpeechRecognition> | null>(null)
+  const activeRef = useRef(false)
 
   const textPrimary = isDark ? '#fafafa' : '#09090b'
   const textSoft = isDark ? '#a1a1aa' : '#52525b'
@@ -24,14 +32,67 @@ export function RecordTab() {
   const dangerColor = isDark ? '#ef4444' : '#dc2626'
   const border = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'
 
+  const tags = activeSession?.quickTags ?? []
+  const transcript = activeSession?.transcript ?? ''
+
+  const stopRecognition = useCallback(() => {
+    activeRef.current = false
+    if (recognitionRef.current) {
+      recognitionRef.current.onend = null
+      recognitionRef.current.stop()
+      recognitionRef.current = null
+    }
+  }, [])
+
+  useEffect(() => {
+    return () => { stopRecognition() }
+  }, [stopRecognition])
+
   function toggleRecording() {
     if (isRecording) {
+      stopRecognition()
       setRecording(false)
       toast('Recording saved')
-    } else {
-      setRecSeconds(0)
-      setRecording(true)
+      return
     }
+
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition
+    if (!SR) {
+      toast('Speech recognition not available — use Chrome or Edge')
+      return
+    }
+
+    const recognition = new SR()
+    recognition.continuous = true
+    recognition.interimResults = true
+    recognition.lang = 'en-US'
+
+    recognition.onresult = (e: SpeechRecognitionEvent) => {
+      let finalText = ''
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) {
+          finalText += e.results[i][0].transcript + ' '
+        }
+      }
+      if (finalText) {
+        const current = useSession.getState().activeSession?.transcript ?? ''
+        updateActiveSession({ transcript: current + finalText })
+      }
+    }
+
+    recognition.onerror = (e: Event & { error: string }) => {
+      if (e.error !== 'no-speech') toast(`Recognition error: ${e.error}`)
+    }
+
+    recognition.onend = () => {
+      if (activeRef.current) recognition.start()
+    }
+
+    recognitionRef.current = recognition
+    activeRef.current = true
+    recognition.start()
+    setRecSeconds(0)
+    setRecording(true)
   }
 
   function handleAddTag(label: string, emoji: string) {
@@ -48,7 +109,6 @@ export function RecordTab() {
         <h2 className="text-[16px] font-bold tracking-tight" style={{ color: textPrimary }}>Record</h2>
       </div>
       <div className="flex-1 overflow-y-auto space-y-8 pr-2" style={{ scrollbarWidth: 'thin', scrollbarColor: `${textMuted} transparent` }}>
-        {/* Record Button */}
         <div className="flex flex-col items-center justify-center gap-5 py-4">
           <button
             onClick={toggleRecording}
@@ -75,7 +135,6 @@ export function RecordTab() {
           </button>
         </div>
 
-        {/* Quick Tags */}
         <div className="space-y-3">
           <h3 className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: textMuted }}>
             Quick Tags
@@ -98,7 +157,6 @@ export function RecordTab() {
           </div>
         </div>
 
-        {/* Tag List */}
         <div className="space-y-2">
           {tags.map((tag) => (
             <div
@@ -130,7 +188,6 @@ export function RecordTab() {
           ))}
         </div>
 
-        {/* Transcript */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-[15px] font-bold" style={{ color: textPrimary }}>Live Transcript</h2>
@@ -138,32 +195,17 @@ export function RecordTab() {
               className="text-[11px] font-medium px-2.5 py-1 rounded-[8px]"
               style={{ backgroundColor: isDark ? 'rgba(196,240,66,0.12)' : 'rgba(163,204,41,0.12)', color: 'var(--color-accent-dark)' }}
             >
-              Real-time
+              {isRecording ? 'Listening...' : transcript ? 'Captured' : 'Ready'}
             </span>
           </div>
-          <div className="h-[200px] p-5 overflow-y-auto space-y-5 rounded-[16px]" style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', border: `1px solid ${border}` }}>
-            <div className="flex gap-4">
-              <div
-                className="w-10 h-7 rounded-[8px] flex-shrink-0 flex items-center justify-center font-mono text-[10px] font-medium"
-                style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', color: textMuted }}
-              >
-                01:12
-              </div>
-              <p className="text-sm leading-relaxed" style={{ color: textSoft }}>
-                The primary concern with the current model is heat dissipation at scale. We need to reconsider the internal cooling channels.
+          <div className="min-h-[200px] p-5 overflow-y-auto rounded-[16px]" style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', border: `1px solid ${border}` }}>
+            {transcript ? (
+              <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: textSoft }}>{transcript}</p>
+            ) : (
+              <p className="text-sm italic" style={{ color: textMuted }}>
+                {isRecording ? 'Listening for speech...' : 'Start recording to capture transcript.'}
               </p>
-            </div>
-            <div className="flex gap-4">
-              <div
-                className="w-10 h-7 rounded-[8px] flex-shrink-0 flex items-center justify-center font-mono text-[10px] font-medium"
-                style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', color: textMuted }}
-              >
-                02:10
-              </div>
-              <p className="text-sm leading-relaxed font-medium italic" style={{ color: 'var(--color-accent-dark)' }}>
-                "If we bypass the secondary system, we save 12% immediately."
-              </p>
-            </div>
+            )}
           </div>
         </div>
       </div>

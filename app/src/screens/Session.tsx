@@ -1,11 +1,12 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Download } from 'lucide-react'
+import { ArrowLeft, Share2 } from 'lucide-react'
 import { useTheme } from '@/stores/theme'
 import { useSession } from '@/stores/session'
 import { useRecordingTimer } from '@/hooks/useRecordingTimer'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { PhaseBadge } from '@/components/ui/PhaseBadge'
+import { ExportModal } from '@/components/ui/ExportModal'
 import { RecordTab } from './tabs/RecordTab'
 import { NotesTab } from './tabs/NotesTab'
 import { StructureTab } from './tabs/StructureTab'
@@ -18,6 +19,7 @@ export function Session() {
   const theme = useTheme((s) => s.theme)
   const isDark = theme === 'dark'
   const { activeSession, isRecording, recSeconds } = useSession()
+  const [showExport, setShowExport] = useState(false)
 
   useRecordingTimer()
 
@@ -38,7 +40,6 @@ export function Session() {
 
   return (
     <div className="min-h-screen flex flex-col relative" style={{ zIndex: 1 }}>
-      {/* Header */}
       <header
         className="sticky top-0 z-50 backdrop-blur-[20px]"
         style={{
@@ -89,13 +90,14 @@ export function Session() {
             )}
             <ThemeToggle />
             <button
+              onClick={() => setShowExport(true)}
               className="w-9 h-9 flex items-center justify-center rounded-[10px] transition-all hover:brightness-110"
               style={{
                 backgroundColor: isDark ? 'var(--color-surface-low)' : 'var(--color-surface-light-low)',
                 border: `1px solid ${border}`,
               }}
             >
-              <Download size={16} color={textSoft} />
+              <Share2 size={16} color={textSoft} />
             </button>
           </div>
         </div>
@@ -103,8 +105,6 @@ export function Session() {
 
       <main className="flex-1 max-w-[1400px] w-full mx-auto pt-6 pb-12 px-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-[calc(100vh-120px)]">
-          
-          {/* Main left column (8 cols) */}
           <div className="lg:col-span-8 flex flex-col gap-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 auto-rows-[minmax(400px,auto)]">
                <RecordTab />
@@ -115,8 +115,6 @@ export function Session() {
                <QuestionsTab />
             </div>
           </div>
-          
-          {/* Right column (4 cols) */}
           <div className="lg:col-span-4 flex flex-col gap-6">
             <div className="min-h-[400px]">
               <DomainTab />
@@ -125,9 +123,10 @@ export function Session() {
               <SolutionsTab />
             </div>
           </div>
-
         </div>
       </main>
+
+      <ExportModal open={showExport} onClose={() => setShowExport(false)} />
     </div>
   )
 }

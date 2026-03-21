@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { Sparkles, Network } from 'lucide-react'
 import { useTheme } from '@/stores/theme'
+import { useSession } from '@/stores/session'
 import { useToast } from '@/stores/toast'
+import { api } from '@/lib/api'
 import { AIResultBox } from '@/components/ui/AIResultBox'
 import { LoadingBar } from '@/components/ui/LoadingBar'
 import { GlassCard } from '@/components/ui/GlassCard'
@@ -9,22 +11,30 @@ import { GlassCard } from '@/components/ui/GlassCard'
 export function StructureTab() {
   const theme = useTheme((s) => s.theme)
   const isDark = theme === 'dark'
+  const { activeSession, updateActiveSession } = useSession()
   const toast = useToast((s) => s.show)
   const [loading, setLoading] = useState(false)
-  const [showResult, setShowResult] = useState(false)
 
   const textSoft = isDark ? '#a1a1aa' : '#52525b'
   const textMuted = isDark ? '#71717a' : '#a1a1aa'
   const textPrimary = isDark ? '#fafafa' : '#09090b'
   const border = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'
 
-  function handleGenerate() {
+  const result = activeSession?.structuredNotes ?? ''
+  const hasContent = !!(activeSession?.transcript || activeSession?.manualNotes)
+
+  async function handleGenerate() {
+    if (!activeSession) return
     setLoading(true)
-    setTimeout(() => {
-      setLoading(false)
-      setShowResult(true)
+    try {
+      const { result } = await api.aiStructure(activeSession.id)
+      updateActiveSession({ structuredNotes: result })
       toast('AI analysis complete')
-    }, 1800)
+    } catch {
+      toast('AI request failed — try again')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -50,7 +60,8 @@ export function StructureTab() {
         >
           <button
             onClick={handleGenerate}
-            className="px-5 py-2.5 rounded-[12px] font-semibold text-sm flex items-center gap-2.5 transition-all hover:brightness-110"
+            disabled={loading || !hasContent}
+            className="px-5 py-2.5 rounded-[12px] font-semibold text-sm flex items-center gap-2.5 transition-all hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed"
             style={{
               backgroundColor: isDark ? 'var(--color-surface-highest)' : '#ffffff',
               color: textPrimary,
@@ -58,27 +69,21 @@ export function StructureTab() {
             }}
           >
             <Sparkles size={16} color="var(--color-accent-dark)" />
-            Structure My Notes
+            {result ? 'Re-structure Notes' : 'Structure My Notes'}
           </button>
           <LoadingBar visible={loading} />
+          {!hasContent && (
+            <p className="text-xs" style={{ color: textMuted }}>Add notes or record first</p>
+          )}
         </div>
 
-        <AIResultBox title="AI Structural Synthesis" visible={showResult}>
-          <div className="space-y-5">
-            {[
-              { num: '01', title: 'Technical Requirements', text: 'Redesign internal cooling channels to support high-load thermal profiles. Transition to titanium-grade alloys for critical stress points.' },
-              { num: '02', title: 'Strategic Decisions', text: 'Bypass secondary systems to achieve 12% efficiency improvement and weight reduction targets.' },
-              { num: '03', title: 'Action Items', text: 'Schedule follow-up engineering review within 2 weeks. Prepare prototype specifications for Q1 evaluation.' },
-            ].map((item) => (
-              <div key={item.num}>
-                <h4 className="text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: textMuted }}>
-                  {item.num}. {item.title}
-                </h4>
-                <p className="text-sm leading-relaxed" style={{ color: textSoft }}>{item.text}</p>
-              </div>
-            ))}
-          </div>
-        </AIResultBox>
+        {result && (
+          <AIResultBox title="AI Structural Synthesis" visible>
+            <div className="prose-sm text-sm leading-relaxed whitespace-pre-wrap" style={{ color: textSoft }}>
+              {result}
+            </div>
+          </AIResultBox>
+        )}
       </div>
     </GlassCard>
   )
