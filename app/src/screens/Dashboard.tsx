@@ -218,8 +218,8 @@ export function Dashboard() {
               </div>
 
               {/* Session Cards Grid */}
-              <div className="flex-1 overflow-y-auto pr-2" style={{ scrollbarWidth: 'thin', scrollbarColor: `${textMuted} transparent` }}>
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 pb-4">
+              <div className="flex-1 overflow-y-auto pr-2 pt-2" style={{ scrollbarWidth: 'thin', scrollbarColor: `${textMuted} transparent` }}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 pb-4 px-1">
                   {filtered.map((session, i) => {
                     return (
                       <motion.div
@@ -227,7 +227,7 @@ export function Dashboard() {
                         initial={{ opacity: 0, y: 12 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.04, duration: 0.3 }}
-                        className="group relative rounded-[20px] overflow-hidden cursor-pointer backdrop-blur-xl transition-all duration-300"
+                        className="group relative rounded-[20px] cursor-pointer backdrop-blur-xl transition-all duration-300"
                         style={{
                           backgroundColor: isDark ? 'rgba(26, 26, 26, 0.5)' : 'rgba(255, 255, 255, 0.5)',
                           border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.6)'}`,
@@ -240,7 +240,7 @@ export function Dashboard() {
                           navigate('/session')
                         }}
                         whileHover={{
-                          y: -6,
+                          scale: 1.03,
                           boxShadow: isDark
                             ? '0 24px 50px -8px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.08)'
                             : '0 20px 40px -8px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.8)',
