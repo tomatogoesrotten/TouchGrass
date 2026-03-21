@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, UserPlus } from 'lucide-react'
 import { useTheme } from '@/stores/theme'
 import { useSession } from '@/stores/session'
 import type { Phase } from '@/stores/session'
 import { useToast } from '@/stores/toast'
+import { useSettings } from '@/stores/settings'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { PrimaryBtn } from '@/components/ui/PrimaryBtn'
@@ -18,14 +19,17 @@ const phases: { phase: Phase; num: string; desc: string }[] = [
   { phase: 'troubleshoot', num: '04', desc: 'Diagnose and resolve client issues.' },
 ]
 
-const industries = ['', 'Renewable Energy', 'Cloud Infrastructure', 'Financial Services', 'Autonomous Logistics', 'Healthcare', 'Aerospace']
-
 export function Setup() {
   const navigate = useNavigate()
   const theme = useTheme((s) => s.theme)
   const isDark = theme === 'dark'
   const addSession = useSession((s) => s.addSession)
   const toast = useToast((s) => s.show)
+  const { settings, loaded: settingsLoaded, loadSettings } = useSettings()
+
+  useEffect(() => { if (!settingsLoaded) loadSettings() }, [settingsLoaded, loadSettings])
+
+  const industries = ['', ...settings.industries]
 
   const [client, setClient] = useState('')
   const [industry, setIndustry] = useState('')

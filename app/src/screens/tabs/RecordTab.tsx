@@ -25,7 +25,7 @@ export function RecordTab() {
   const toast = useToast((s) => s.show)
   const recognitionRef = useRef<InstanceType<typeof window.SpeechRecognition> | null>(null)
   const activeRef = useRef(false)
-  const committedRef = useRef('')
+  const baseTranscriptRef = useRef('')
 
   const textPrimary = isDark ? '#fafafa' : '#09090b'
   const textSoft = isDark ? '#a1a1aa' : '#52525b'
@@ -69,19 +69,12 @@ export function RecordTab() {
     recognition.lang = 'en-US'
 
     recognition.onresult = (e: SpeechRecognitionEvent) => {
-      let sessionFinal = ''
+      let full = ''
       for (let i = 0; i < e.results.length; i++) {
-        if (e.results[i].isFinal) {
-          sessionFinal += e.results[i][0].transcript + ' '
-        }
+        full += e.results[i][0].transcript
       }
-      if (sessionFinal && sessionFinal !== committedRef.current) {
-        const newText = sessionFinal.slice(committedRef.current.length)
-        if (newText.trim()) {
-          const current = useSession.getState().activeSession?.transcript ?? ''
-          updateActiveSession({ transcript: current + newText })
-        }
-        committedRef.current = sessionFinal
+      if (full.trim()) {
+        updateActiveSession({ transcript: baseTranscriptRef.current + full })
       }
     }
 
@@ -100,14 +93,14 @@ export function RecordTab() {
 
     recognition.onend = () => {
       if (activeRef.current) {
-        committedRef.current = ''
+        baseTranscriptRef.current = useSession.getState().activeSession?.transcript ?? ''
         recognition.start()
       }
     }
 
     recognitionRef.current = recognition
     activeRef.current = true
-    committedRef.current = ''
+    baseTranscriptRef.current = useSession.getState().activeSession?.transcript ?? ''
     recognition.start()
     setRecSeconds(0)
     setRecording(true)

@@ -96,4 +96,59 @@ export const api = {
 
   getExportUrl: (id: string, format: 'json' | 'markdown' | 'pdf') =>
     `${BASE}/api/export/${id}/${format}`,
+
+  getAnalyticsSummary: (range?: string) =>
+    request<AnalyticsSummary>(`/api/analytics/summary${range ? `?range=${range}` : ''}`),
+
+  getSettings: () =>
+    request<AppSettings>('/api/settings'),
+
+  updateSettings: (data: Partial<AppSettings>) =>
+    request<AppSettings>('/api/settings', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  testWebhook: (url: string) =>
+    request<{ success: boolean; status: number }>('/api/settings/test-webhook', {
+      method: 'POST',
+      body: JSON.stringify({ url }),
+    }),
 };
+
+export interface AnalyticsSummary {
+  phaseDistribution: { phase: string; count: number }[]
+  industryDistribution: { industry: string; count: number }[]
+  sessionsOverTime: { date: string; count: number }[]
+  activityHeatmap: { date: string; count: number }[]
+  tagDistribution: { label: string; emoji: string; count: number }[]
+  aiUsage: { feature: string; count: number }[]
+  engagementFunnel: { phase: string; client_count: number }[]
+  totals: {
+    totalSessions: number
+    activeClients: number
+    aiUtilization: number
+    avgTags: number
+  }
+}
+
+export interface AppSettings {
+  ai_model: string
+  prompts: {
+    structure: string
+    questions: string
+    domain: string
+    solutions: string
+  }
+  industries: string[]
+  webhook_url: string
+  theme_default: string
+  export_defaults: {
+    format: string
+    includeSections: string[]
+  }
+  speech_settings: {
+    language: string
+    continuous: boolean
+  }
+}

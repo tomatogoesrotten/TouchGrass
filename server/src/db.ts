@@ -28,6 +28,13 @@ export async function migrate() {
       updated_at            TIMESTAMPTZ DEFAULT NOW()
     );
   `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS settings (
+      key         TEXT PRIMARY KEY,
+      value       JSONB NOT NULL,
+      updated_at  TIMESTAMPTZ DEFAULT NOW()
+    );
+  `);
   console.log('[db] migration complete');
 }
 

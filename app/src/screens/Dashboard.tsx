@@ -5,7 +5,7 @@ import { Plus, Search, X, BarChart3, Globe2, CalendarDays } from 'lucide-react'
 import { useTheme } from '@/stores/theme'
 import { useSession } from '@/stores/session'
 import type { Phase } from '@/stores/session'
-import { ThemeToggle } from '@/components/ui/ThemeToggle'
+import { NavBar } from '@/components/ui/NavBar'
 import { GlassCard } from '@/components/ui/GlassCard'
 import { PrimaryBtn } from '@/components/ui/PrimaryBtn'
 import { PhaseBadge } from '@/components/ui/PhaseBadge'
@@ -56,55 +56,7 @@ export function Dashboard() {
 
   return (
     <div className="min-h-screen relative" style={{ zIndex: 1 }}>
-      {/* Top Navigation Bar */}
-      <header
-        className="sticky top-0 z-50 backdrop-blur-[20px]"
-        style={{
-          backgroundColor: isDark ? 'rgba(9,9,11,0.85)' : 'rgba(245,245,247,0.85)',
-          borderBottom: `1px solid ${border}`,
-        }}
-      >
-        <div className="max-w-[1400px] mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-[10px] overflow-hidden flex-shrink-0">
-              <img
-                src="/touchgrass.png"
-                alt="TouchGrass"
-                className="w-full h-full object-cover scale-[1.35]"
-              />
-            </div>
-            <span className="text-[17px] font-bold tracking-tight" style={{ color: textPrimary }}>
-              TouchGrass
-            </span>
-          </div>
-
-          <nav
-            className="hidden md:flex items-center gap-1 rounded-[100px] p-1"
-            style={{ backgroundColor: isDark ? '#18181b' : '#ffffff', border: `1px solid ${border}` }}
-          >
-            {['Dashboard', 'Sessions', 'Analytics'].map((item, i) => (
-              <button
-                key={item}
-                className="px-5 py-2 rounded-[100px] text-[13px] font-semibold transition-all"
-                style={{
-                  backgroundColor: i === 0 ? (isDark ? '#27272a' : '#f4f4f5') : 'transparent',
-                  color: i === 0 ? textPrimary : textMuted,
-                }}
-              >
-                {item}
-              </button>
-            ))}
-          </nav>
-
-          <div className="flex items-center gap-3">
-            <ThemeToggle />
-            <PrimaryBtn className="px-4 py-2 h-9 text-[13px]" onClick={() => navigate('/setup')}>
-              <Plus size={15} strokeWidth={2.5} />
-              New Session
-            </PrimaryBtn>
-          </div>
-        </div>
-      </header>
+      <NavBar />
 
       <main className="max-w-[1400px] mx-auto px-6 pt-8 pb-20">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">

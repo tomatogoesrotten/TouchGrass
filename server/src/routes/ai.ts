@@ -7,6 +7,7 @@ import {
   domainPrompt,
   solutionsPrompt,
 } from '../prompts.js';
+import { getSetting } from './settings.js';
 
 const router = Router();
 
@@ -14,8 +15,9 @@ function getClient() {
   return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 }
 
-function getModel() {
-  return process.env.OPENAI_MODEL || 'gpt-4o-mini';
+async function getModel() {
+  const override = await getSetting<string>('ai_model');
+  return override || process.env.OPENAI_MODEL || 'gpt-4o-mini';
 }
 
 async function getSession(id: string) {
@@ -48,11 +50,15 @@ router.post('/structure', async (req, res) => {
     }
 
     const openai = getClient();
+    const [model, prompt] = await Promise.all([
+      getModel(),
+      structurePrompt(session.industry as string, session.phase as string),
+    ]);
     const completion = await openai.chat.completions.create({
-      model: getModel(),
+      model,
       max_tokens: 1500,
       messages: [
-        { role: 'system', content: structurePrompt(session.industry as string, session.phase as string) },
+        { role: 'system', content: prompt },
         { role: 'user', content: context },
       ],
     });
@@ -81,11 +87,15 @@ router.post('/questions', async (req, res) => {
     }
 
     const openai = getClient();
+    const [model, prompt] = await Promise.all([
+      getModel(),
+      questionsPrompt(session.industry as string, session.phase as string),
+    ]);
     const completion = await openai.chat.completions.create({
-      model: getModel(),
+      model,
       max_tokens: 1500,
       messages: [
-        { role: 'system', content: questionsPrompt(session.industry as string, session.phase as string) },
+        { role: 'system', content: prompt },
         { role: 'user', content: context || 'No meeting data available yet. Generate general questions for this phase.' },
       ],
     });
@@ -112,11 +122,15 @@ router.post('/domain', async (req, res) => {
     if (!session) { res.status(404).json({ error: 'Session not found' }); return; }
 
     const openai = getClient();
+    const [model, prompt] = await Promise.all([
+      getModel(),
+      domainPrompt(session.industry as string),
+    ]);
     const completion = await openai.chat.completions.create({
-      model: getModel(),
+      model,
       max_tokens: 500,
       messages: [
-        { role: 'system', content: domainPrompt(session.industry as string) },
+        { role: 'system', content: prompt },
         { role: 'user', content: `Explain: ${term}` },
       ],
     });
@@ -143,11 +157,15 @@ router.post('/solutions', async (req, res) => {
     context += `\n\nMY SOLUTION IDEAS:\n${session.private_solutions}`;
 
     const openai = getClient();
+    const [model, prompt] = await Promise.all([
+      getModel(),
+      solutionsPrompt(session.industry as string, session.phase as string),
+    ]);
     const completion = await openai.chat.completions.create({
-      model: getModel(),
+      model,
       max_tokens: 1500,
       messages: [
-        { role: 'system', content: solutionsPrompt(session.industry as string, session.phase as string) },
+        { role: 'system', content: prompt },
         { role: 'user', content: context },
       ],
     });
