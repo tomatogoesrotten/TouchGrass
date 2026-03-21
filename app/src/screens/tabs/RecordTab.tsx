@@ -55,7 +55,7 @@ export function RecordTab() {
   const [savingAudio, setSavingAudio] = useState(false)
   const [loadingAudio, setLoadingAudio] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const baseTextRef = useRef('')
+  const finalizedTextRef = useRef('')
 
   const textPrimary = isDark ? '#fafafa' : '#09090b'
   const textSoft = isDark ? '#a1a1aa' : '#52525b'
@@ -164,7 +164,7 @@ export function RecordTab() {
       return
     }
 
-    baseTextRef.current = useSession.getState().activeSession?.transcript ?? ''
+    finalizedTextRef.current = useSession.getState().activeSession?.transcript ?? ''
 
     const recognition = new SR()
     recognition.continuous = settings.speech_settings.continuous
@@ -176,19 +176,24 @@ export function RecordTab() {
       let interim = ''
 
       for (let i = 0; i < e.results.length; i++) {
-        if (e.results[i].isFinal) {
-          finals += e.results[i][0].transcript
+        const result = e.results[i]
+        if (result.isFinal) {
+          finals += result[0].transcript
         } else {
-          interim += e.results[i][0].transcript
+          interim += result[0].transcript
         }
       }
 
-      const display = baseTextRef.current + finals + interim
+      if (finals) {
+        finalizedTextRef.current = finalizedTextRef.current + finals
+      }
+
+      const display = finalizedTextRef.current + (interim ? interim : '')
       updateActiveSession({ transcript: display })
     }
 
     recognition.onerror = (e: Event & { error: string }) => {
-      if (e.error === 'no-speech') return
+      if (e.error === 'no-speech' || e.error === 'aborted') return
       if (e.error === 'network') {
         toast('No internet — recording audio only', 'error')
       } else if (e.error === 'not-allowed') {
@@ -203,8 +208,6 @@ export function RecordTab() {
 
     recognition.onend = () => {
       if (activeRef.current) {
-        const current = useSession.getState().activeSession?.transcript ?? ''
-        baseTextRef.current = current
         try { recognition.start() } catch { /* already started */ }
       }
     }
