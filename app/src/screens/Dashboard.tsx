@@ -183,7 +183,7 @@ export function Dashboard() {
                     onChange={(e) => setSearch(e.target.value)}
                   />
                 </div>
-                <div className="flex flex-wrap gap-2 items-center bg-black/5 dark:bg-white/5 p-1 rounded-[100px]" style={{ border: `1px solid ${border}` }}>
+                <div className="flex flex-wrap gap-2 items-center bg-black/5 dark:bg-white/5 p-1.5 rounded-2xl md:rounded-[100px]" style={{ border: `1px solid ${border}` }}>
                   <button
                     className="px-4 py-1.5 rounded-[100px] text-[12px] font-semibold transition-all"
                     style={{
@@ -245,7 +245,7 @@ export function Dashboard() {
                       >
                         {/* Delete button */}
                         <button
-                          className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-all w-7 h-7 rounded-[8px] flex items-center justify-center"
+                          className="absolute top-4 right-10 opacity-0 group-hover:opacity-100 transition-all w-7 h-7 rounded-[8px] flex items-center justify-center z-10"
                           style={{
                             backgroundColor: isDark ? 'rgba(255,77,106,0.1)' : 'rgba(229,56,75,0.08)',
                             color: isDark ? 'var(--color-danger-dark)' : 'var(--color-danger-light)',
@@ -261,7 +261,7 @@ export function Dashboard() {
                         <div className="p-6">
                           <div className="flex items-center justify-between mb-5">
                             <PhaseBadge phase={session.phase} />
-                            <ArrowUpRight size={16} color={textMuted} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <ArrowUpRight size={16} color={textMuted} className="opacity-0 group-hover:opacity-100 transition-opacity absolute top-4 right-4" />
                           </div>
                           <h3
                             className="text-[16px] font-bold tracking-tight mb-1"
