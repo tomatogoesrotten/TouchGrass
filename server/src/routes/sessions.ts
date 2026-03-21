@@ -115,6 +115,51 @@ router.patch('/:id', async (req, res) => {
   }
 });
 
+router.put('/:id/audio', async (req, res) => {
+  try {
+    const { audio, mimeType } = req.body;
+    if (!audio) {
+      res.status(400).json({ error: 'audio data is required' });
+      return;
+    }
+    const { rows } = await pool.query(
+      `UPDATE sessions SET audio_data = $1, audio_mime = $2, updated_at = NOW()
+       WHERE id = $3 RETURNING id`,
+      [audio, mimeType || 'audio/webm', req.params.id]
+    );
+    if (rows.length === 0) {
+      res.status(404).json({ error: 'Session not found' });
+      return;
+    }
+    res.json({ success: true });
+  } catch (err) {
+    console.error('[sessions] audio upload error:', err);
+    res.status(500).json({ error: 'Failed to upload audio' });
+  }
+});
+
+router.get('/:id/audio', async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      'SELECT audio_data, audio_mime FROM sessions WHERE id = $1',
+      [req.params.id]
+    );
+    if (rows.length === 0) {
+      res.status(404).json({ error: 'Session not found' });
+      return;
+    }
+    const { audio_data, audio_mime } = rows[0];
+    if (!audio_data) {
+      res.status(404).json({ error: 'No audio data' });
+      return;
+    }
+    res.json({ audio: audio_data, mimeType: audio_mime || 'audio/webm' });
+  } catch (err) {
+    console.error('[sessions] audio download error:', err);
+    res.status(500).json({ error: 'Failed to get audio' });
+  }
+});
+
 router.delete('/:id', async (req, res) => {
   try {
     const { rowCount } = await pool.query('DELETE FROM sessions WHERE id = $1', [req.params.id]);

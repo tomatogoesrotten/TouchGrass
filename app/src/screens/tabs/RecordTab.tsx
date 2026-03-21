@@ -4,6 +4,7 @@ import { useTheme } from '@/stores/theme'
 import { useSession } from '@/stores/session'
 import { useSettings } from '@/stores/settings'
 import { useToast } from '@/stores/toast'
+import { api } from '@/lib/api'
 import { GlassCard } from '@/components/ui/GlassCard'
 
 const quickTags = [
@@ -16,6 +17,25 @@ const quickTags = [
 
 type SpeechRecognitionEvent = Event & { results: SpeechRecognitionResultList; resultIndex: number }
 
+function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      const result = reader.result as string
+      resolve(result.split(',')[1])
+    }
+    reader.onerror = reject
+    reader.readAsDataURL(blob)
+  })
+}
+
+function base64ToBlob(base64: string, mimeType: string): Blob {
+  const binary = atob(base64)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+  return new Blob([bytes], { type: mimeType })
+}
+
 export function RecordTab() {
   const theme = useTheme((s) => s.theme)
   const isDark = theme === 'dark'
@@ -27,12 +47,15 @@ export function RecordTab() {
   const { settings } = useSettings()
   const recognitionRef = useRef<InstanceType<typeof window.SpeechRecognition> | null>(null)
   const activeRef = useRef(false)
-  const finalizedRef = useRef('')
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
+  const mimeTypeRef = useRef('audio/webm')
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
   const [importing, setImporting] = useState(false)
+  const [savingAudio, setSavingAudio] = useState(false)
+  const [loadingAudio, setLoadingAudio] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const lastFinalCountRef = useRef(0)
 
   const textPrimary = isDark ? '#fafafa' : '#09090b'
   const textSoft = isDark ? '#a1a1aa' : '#52525b'
@@ -44,11 +67,27 @@ export function RecordTab() {
   const tags = activeSession?.quickTags ?? []
   const transcript = activeSession?.transcript ?? ''
 
+  // Load persisted audio on mount
+  useEffect(() => {
+    if (!activeSession?.id) return
+    setLoadingAudio(true)
+    api.getAudio(activeSession.id)
+      .then(({ audio, mimeType }) => {
+        const blob = base64ToBlob(audio, mimeType)
+        setAudioUrl(URL.createObjectURL(blob))
+        mimeTypeRef.current = mimeType
+      })
+      .catch(() => { /* no audio stored yet */ })
+      .finally(() => setLoadingAudio(false))
+  }, [activeSession?.id])
+
   const stopRecognition = useCallback(() => {
     activeRef.current = false
     if (recognitionRef.current) {
       recognitionRef.current.onend = null
-      recognitionRef.current.stop()
+      recognitionRef.current.onresult = null
+      recognitionRef.current.onerror = null
+      try { recognitionRef.current.stop() } catch { /* already stopped */ }
       recognitionRef.current = null
     }
   }, [])
@@ -66,10 +105,25 @@ export function RecordTab() {
     }
   }, [stopRecognition, stopMediaRecorder])
 
+  async function persistAudio(blob: Blob) {
+    if (!activeSession?.id) return
+    setSavingAudio(true)
+    try {
+      const base64 = await blobToBase64(blob)
+      await api.uploadAudio(activeSession.id, base64, blob.type)
+    } catch (err) {
+      console.error('Failed to persist audio:', err)
+    } finally {
+      setSavingAudio(false)
+    }
+  }
+
   function startMediaRecorder() {
     navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
       audioChunksRef.current = []
-      const recorder = new MediaRecorder(stream, { mimeType: getSupportedMimeType() })
+      const mime = getSupportedMimeType()
+      mimeTypeRef.current = mime
+      const recorder = new MediaRecorder(stream, { mimeType: mime })
       recorder.ondataavailable = (e) => {
         if (e.data.size > 0) audioChunksRef.current.push(e.data)
       }
@@ -78,11 +132,12 @@ export function RecordTab() {
         const url = URL.createObjectURL(blob)
         setAudioUrl(url)
         stream.getTracks().forEach((t) => t.stop())
+        persistAudio(blob)
       }
       recorder.start(1000)
       mediaRecorderRef.current = recorder
     }).catch(() => {
-      // Mic already captured by SpeechRecognition in some browsers; non-fatal
+      // Mic already captured by SpeechRecognition; non-fatal
     })
   }
 
@@ -109,31 +164,45 @@ export function RecordTab() {
       return
     }
 
+    const existingTranscript = useSession.getState().activeSession?.transcript ?? ''
+
     const recognition = new SR()
     recognition.continuous = settings.speech_settings.continuous
     recognition.interimResults = true
     recognition.lang = settings.speech_settings.language
 
+    lastFinalCountRef.current = 0
+
     recognition.onresult = (e: SpeechRecognitionEvent) => {
-      let finalText = ''
-      let interimText = ''
+      let newFinals = ''
+      let interim = ''
+      let finalCount = 0
+
       for (let i = 0; i < e.results.length; i++) {
         const result = e.results[i]
         if (result.isFinal) {
-          finalText += result[0].transcript
+          finalCount++
+          if (finalCount > lastFinalCountRef.current) {
+            newFinals += result[0].transcript
+          }
         } else {
-          interimText += result[0].transcript
+          interim += result[0].transcript
         }
       }
 
-      const newFinalized = finalizedRef.current + finalText
-      if (finalText) {
-        finalizedRef.current = newFinalized
-      }
+      if (newFinals) {
+        lastFinalCountRef.current = finalCount
+        const current = useSession.getState().activeSession?.transcript ?? ''
+        const updated = current + newFinals
+        updateActiveSession({ transcript: updated })
 
-      const combined = (newFinalized + interimText).trim()
-      if (combined) {
-        updateActiveSession({ transcript: combined })
+        if (interim) {
+          updateActiveSession({ transcript: updated + interim })
+        }
+      } else if (interim) {
+        const current = useSession.getState().activeSession?.transcript ?? ''
+        const base = getBaseTranscript(current, interim)
+        updateActiveSession({ transcript: base + interim })
       }
     }
 
@@ -153,18 +222,30 @@ export function RecordTab() {
 
     recognition.onend = () => {
       if (activeRef.current) {
+        lastFinalCountRef.current = 0
         try { recognition.start() } catch { /* already started */ }
       }
     }
 
     recognitionRef.current = recognition
     activeRef.current = true
-    finalizedRef.current = useSession.getState().activeSession?.transcript ?? ''
+
+    if (existingTranscript && !existingTranscript.endsWith('\n') && !existingTranscript.endsWith(' ')) {
+      updateActiveSession({ transcript: existingTranscript + '\n' })
+    }
+
     setAudioUrl(null)
     recognition.start()
     startMediaRecorder()
     setRecSeconds(0)
     setRecording(true)
+  }
+
+  function getBaseTranscript(current: string, interim: string): string {
+    if (current.endsWith(interim)) {
+      return current.slice(0, current.length - interim.length)
+    }
+    return current
   }
 
   function handleAddTag(label: string, emoji: string) {
@@ -174,7 +255,7 @@ export function RecordTab() {
 
   function handleExportAudio() {
     if (!audioUrl) return
-    const ext = mediaRecorderRef.current?.mimeType?.includes('mp4') ? 'mp4' : 'webm'
+    const ext = mimeTypeRef.current.includes('mp4') ? 'mp4' : 'webm'
     const a = document.createElement('a')
     a.href = audioUrl
     a.download = `recording-${activeSession?.client || 'session'}-${new Date().toISOString().slice(0, 10)}.${ext}`
@@ -184,22 +265,16 @@ export function RecordTab() {
   async function handleImportAudio(file: File) {
     setImporting(true)
     try {
-      const audioContext = new AudioContext()
-      const arrayBuffer = await file.arrayBuffer()
-      await audioContext.decodeAudioData(arrayBuffer)
-
       const url = URL.createObjectURL(file)
       setAudioUrl(url)
+      mimeTypeRef.current = file.type || 'audio/mpeg'
       toast(`Imported: ${file.name}`)
 
-      const SR = window.SpeechRecognition || window.webkitSpeechRecognition
-      if (!SR) {
-        toast('Speech recognition not available for transcription', 'error')
-        setImporting(false)
-        return
+      if (activeSession?.id) {
+        const base64 = await blobToBase64(file)
+        await api.uploadAudio(activeSession.id, base64, file.type || 'audio/mpeg')
+        toast('Audio saved to session', 'success')
       }
-
-      toast('Audio imported. Use the browser to play and transcribe live, or manually add notes.', 'success')
     } catch {
       toast('Failed to import audio file', 'error')
     } finally {
@@ -217,7 +292,6 @@ export function RecordTab() {
           <h2 className="text-[16px] font-bold tracking-tight" style={{ color: textPrimary }}>Record</h2>
         </div>
         <div className="flex items-center gap-1.5">
-          {/* Import Audio */}
           <input
             ref={fileInputRef}
             type="file"
@@ -241,7 +315,6 @@ export function RecordTab() {
           >
             {importing ? <Loader2 size={14} color={textMuted} className="animate-spin" /> : <Upload size={14} color={textMuted} />}
           </button>
-          {/* Export Audio */}
           <button
             className="w-8 h-8 rounded-[8px] flex items-center justify-center transition-all hover:brightness-110 disabled:opacity-30"
             style={{
@@ -281,9 +354,20 @@ export function RecordTab() {
               </>
             )}
           </button>
+          {savingAudio && (
+            <div className="flex items-center gap-2 text-[11px] font-medium" style={{ color: textMuted }}>
+              <Loader2 size={12} className="animate-spin" /> Saving audio...
+            </div>
+          )}
         </div>
 
-        {/* Imported/Recorded Audio Player */}
+        {/* Audio Player */}
+        {loadingAudio && (
+          <div className="flex items-center gap-2 justify-center py-4">
+            <Loader2 size={14} className="animate-spin" color={textMuted} />
+            <span className="text-[12px]" style={{ color: textMuted }}>Loading audio...</span>
+          </div>
+        )}
         {audioUrl && !isRecording && (
           <div className="space-y-2">
             <h3 className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: textMuted }}>

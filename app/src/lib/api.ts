@@ -97,6 +97,15 @@ export const api = {
   getExportUrl: (id: string, format: 'json' | 'markdown' | 'pdf') =>
     `${BASE}/api/export/${id}/${format}`,
 
+  uploadAudio: (id: string, audio: string, mimeType: string) =>
+    request<{ success: boolean }>(`/api/sessions/${id}/audio`, {
+      method: 'PUT',
+      body: JSON.stringify({ audio, mimeType }),
+    }),
+
+  getAudio: (id: string) =>
+    request<{ audio: string; mimeType: string }>(`/api/sessions/${id}/audio`),
+
   getAnalyticsSummary: (range?: string) =>
     request<AnalyticsSummary>(`/api/analytics/summary${range ? `?range=${range}` : ''}`),
 

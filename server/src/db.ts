@@ -35,6 +35,12 @@ export async function migrate() {
       updated_at  TIMESTAMPTZ DEFAULT NOW()
     );
   `);
+  await pool.query(`
+    ALTER TABLE sessions ADD COLUMN IF NOT EXISTS audio_data TEXT DEFAULT '';
+  `);
+  await pool.query(`
+    ALTER TABLE sessions ADD COLUMN IF NOT EXISTS audio_mime TEXT DEFAULT '';
+  `);
   console.log('[db] migration complete');
 }
 
