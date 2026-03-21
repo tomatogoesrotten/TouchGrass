@@ -44,10 +44,10 @@ export function AIUsageStats({ data, total }: Props) {
               color: isDark ? '#fafafa' : '#09090b',
               boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
             }}
-            formatter={(value: number, _name: string, props: { payload: { pct: number } }) => [
-              `${value} (${props.payload.pct}%)`,
-              'Sessions',
-            ]}
+            formatter={(value, _name, props) => {
+              const pct = (props.payload as { pct: number }).pct
+              return [`${value} (${pct}%)`, 'Sessions']
+            }}
             cursor={{ fill: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)' }}
           />
           <Bar dataKey="count" radius={[6, 6, 0, 0]} maxBarSize={40}>

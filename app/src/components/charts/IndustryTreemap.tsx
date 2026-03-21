@@ -63,7 +63,7 @@ export function IndustryTreemap({ data }: Props) {
             color: isDark ? '#fafafa' : '#09090b',
             boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
           }}
-          formatter={(value: number) => [`${value} sessions`, 'Count']}
+          formatter={(value) => [`${value} sessions`, 'Count']}
         />
       </Treemap>
     </ResponsiveContainer>
