@@ -1,4 +1,4 @@
-import { X } from 'lucide-react'
+import { X, Mic } from 'lucide-react'
 import { useTheme } from '@/stores/theme'
 import { useSession } from '@/stores/session'
 import { useToast } from '@/stores/toast'
@@ -41,125 +41,133 @@ export function RecordTab() {
   }
 
   return (
-    <div className="space-y-8">
-      {/* Record Button */}
-      <div className="flex flex-col items-center justify-center gap-5 py-6">
-        <button
-          onClick={toggleRecording}
-          className="group relative px-8 py-4 rounded-[100px] font-bold text-[15px] flex items-center gap-3 transition-all active:scale-[0.97] record-pulse"
-          style={{
-            backgroundColor: isRecording ? dangerColor : accent,
-            color: '#ffffff',
-            boxShadow: isRecording
-              ? `0 0 30px ${dangerColor}25`
-              : `0 0 30px ${accent}25`,
-          }}
-        >
-          {isRecording ? (
-            <>
-              <span className="w-3 h-3 bg-white rounded-[3px]" />
-              Stop Recording
-            </>
-          ) : (
-            <>
-              <span className="w-3 h-3 rounded-full bg-white" />
-              Start Recording
-            </>
-          )}
-        </button>
-      </div>
-
-      {/* Quick Tags */}
-      <div className="space-y-3">
-        <h3 className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: textMuted }}>
-          Quick Tags
-        </h3>
-        <div className="flex flex-wrap gap-2">
-          {quickTags.map(({ label, emoji }) => (
-            <button
-              key={label}
-              className="px-4 py-2 rounded-[100px] cursor-pointer transition-all text-[13px] font-medium flex items-center gap-2 hover:brightness-110"
-              style={{
-                backgroundColor: isDark ? '#18181b' : '#ffffff',
-                color: textPrimary,
-                border: `1px solid ${border}`,
-              }}
-              onClick={() => handleAddTag(label, emoji)}
-            >
-              <span>{emoji}</span> {label}
-            </button>
-          ))}
+    <GlassCard className="h-full flex flex-col p-5 overflow-hidden">
+      <div className="flex items-center gap-2 mb-4">
+        <div className="w-8 h-8 rounded-[8px] flex items-center justify-center" style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}>
+          <Mic size={16} color={textPrimary} />
         </div>
+        <h2 className="text-[16px] font-bold tracking-tight" style={{ color: textPrimary }}>Record</h2>
       </div>
-
-      {/* Tag List */}
-      <div className="space-y-2">
-        {tags.map((tag) => (
-          <div
-            key={tag.id}
-            className="p-4 rounded-[14px] flex items-center justify-between group"
+      <div className="flex-1 overflow-y-auto space-y-8 pr-2" style={{ scrollbarWidth: 'thin', scrollbarColor: `${textMuted} transparent` }}>
+        {/* Record Button */}
+        <div className="flex flex-col items-center justify-center gap-5 py-4">
+          <button
+            onClick={toggleRecording}
+            className="group relative px-8 py-4 rounded-[100px] font-bold text-[15px] flex items-center gap-3 transition-all active:scale-[0.97] record-pulse"
             style={{
-              backgroundColor: isDark ? '#18181b' : '#ffffff',
-              border: `1px solid ${border}`,
+              backgroundColor: isRecording ? dangerColor : 'var(--color-accent-dark)',
+              color: isRecording ? '#ffffff' : '#000000',
+              boxShadow: isRecording
+                ? `0 0 30px ${dangerColor}40`
+                : `0 0 30px rgba(196, 240, 66, 0.4)`,
             }}
           >
-            <div className="flex items-center gap-3">
-              <span className="font-mono text-[11px]" style={{ color: textMuted }}>{tag.time}</span>
-              <span
-                className="px-2.5 py-1 rounded-[8px] text-[10px] font-semibold"
-                style={{ backgroundColor: `${accent}12`, color: accent }}
-              >
-                {tag.emoji} {tag.label}
-              </span>
-              <p className="text-sm" style={{ color: textSoft }}>{tag.note}</p>
-            </div>
-            <button
-              className="opacity-0 group-hover:opacity-100 transition-opacity w-7 h-7 rounded-[8px] flex items-center justify-center"
-              style={{ color: textMuted }}
-              onClick={() => removeTag(tag.id)}
-            >
-              <X size={14} />
-            </button>
-          </div>
-        ))}
-      </div>
-
-      {/* Transcript */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-[15px] font-bold" style={{ color: textPrimary }}>Live Transcript</h2>
-          <span
-            className="text-[11px] font-medium px-2.5 py-1 rounded-[8px]"
-            style={{ backgroundColor: `${accent}12`, color: accent }}
-          >
-            Real-time
-          </span>
+            {isRecording ? (
+              <>
+                <span className="w-3 h-3 bg-white rounded-[3px]" />
+                Stop Recording
+              </>
+            ) : (
+              <>
+                <span className="w-3 h-3 rounded-full bg-black" />
+                Start Recording
+              </>
+            )}
+          </button>
         </div>
-        <GlassCard className="h-[260px] p-6 overflow-y-auto space-y-5">
-          <div className="flex gap-4">
-            <div
-              className="w-10 h-7 rounded-[8px] flex-shrink-0 flex items-center justify-center font-mono text-[10px] font-medium"
-              style={{ backgroundColor: isDark ? '#27272a' : '#f4f4f5', color: textMuted }}
-            >
-              01:12
-            </div>
-            <p className="text-sm leading-relaxed" style={{ color: textSoft }}>
-              The primary concern with the current model is heat dissipation at scale. We need to reconsider the internal cooling channels.
-            </p>
+
+        {/* Quick Tags */}
+        <div className="space-y-3">
+          <h3 className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: textMuted }}>
+            Quick Tags
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {quickTags.map(({ label, emoji }) => (
+              <button
+                key={label}
+                className="px-4 py-2 rounded-[100px] cursor-pointer transition-all text-[13px] font-medium flex items-center gap-2 hover:brightness-110"
+                style={{
+                  backgroundColor: isDark ? 'var(--color-surface-high)' : 'var(--color-surface-light-mid)',
+                  color: textPrimary,
+                  border: `1px solid ${border}`,
+                }}
+                onClick={() => handleAddTag(label, emoji)}
+              >
+                <span>{emoji}</span> {label}
+              </button>
+            ))}
           </div>
-          <div className="flex gap-4">
+        </div>
+
+        {/* Tag List */}
+        <div className="space-y-2">
+          {tags.map((tag) => (
             <div
-              className="w-10 h-7 rounded-[8px] flex-shrink-0 flex items-center justify-center font-mono text-[10px] font-medium"
-              style={{ backgroundColor: isDark ? '#27272a' : '#f4f4f5', color: textMuted }}
+              key={tag.id}
+              className="p-4 rounded-[14px] flex items-center justify-between group"
+              style={{
+                backgroundColor: isDark ? 'var(--color-surface-high)' : 'var(--color-surface-light-mid)',
+                border: `1px solid ${border}`,
+              }}
             >
-              02:10
+              <div className="flex items-center gap-3">
+                <span className="font-mono text-[11px]" style={{ color: textMuted }}>{tag.time}</span>
+                <span
+                  className="px-2.5 py-1 rounded-[8px] text-[10px] font-semibold"
+                  style={{ backgroundColor: isDark ? 'rgba(196,240,66,0.12)' : 'rgba(163,204,41,0.12)', color: 'var(--color-accent-dark)' }}
+                >
+                  {tag.emoji} {tag.label}
+                </span>
+                <p className="text-sm" style={{ color: textSoft }}>{tag.note}</p>
+              </div>
+              <button
+                className="opacity-0 group-hover:opacity-100 transition-opacity w-7 h-7 rounded-[8px] flex items-center justify-center"
+                style={{ color: textMuted }}
+                onClick={() => removeTag(tag.id)}
+              >
+                <X size={14} />
+              </button>
             </div>
-            <p className="text-sm leading-relaxed font-medium italic" style={{ color: accent }}>
-              "If we bypass the secondary system, we save 12% immediately."
-            </p>
+          ))}
+        </div>
+
+        {/* Transcript */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-[15px] font-bold" style={{ color: textPrimary }}>Live Transcript</h2>
+            <span
+              className="text-[11px] font-medium px-2.5 py-1 rounded-[8px]"
+              style={{ backgroundColor: isDark ? 'rgba(196,240,66,0.12)' : 'rgba(163,204,41,0.12)', color: 'var(--color-accent-dark)' }}
+            >
+              Real-time
+            </span>
           </div>
-        </GlassCard>
+          <div className="h-[200px] p-5 overflow-y-auto space-y-5 rounded-[16px]" style={{ backgroundColor: isDark ? 'var(--color-surface-high)' : 'var(--color-surface-light-mid)', border: `1px solid ${border}` }}>
+            <div className="flex gap-4">
+              <div
+                className="w-10 h-7 rounded-[8px] flex-shrink-0 flex items-center justify-center font-mono text-[10px] font-medium"
+                style={{ backgroundColor: isDark ? '#333333' : '#d4d4d8', color: textMuted }}
+              >
+                01:12
+              </div>
+              <p className="text-sm leading-relaxed" style={{ color: textSoft }}>
+                The primary concern with the current model is heat dissipation at scale. We need to reconsider the internal cooling channels.
+              </p>
+            </div>
+            <div className="flex gap-4">
+              <div
+                className="w-10 h-7 rounded-[8px] flex-shrink-0 flex items-center justify-center font-mono text-[10px] font-medium"
+                style={{ backgroundColor: isDark ? '#333333' : '#d4d4d8', color: textMuted }}
+              >
+                02:10
+              </div>
+              <p className="text-sm leading-relaxed font-medium italic" style={{ color: 'var(--color-accent-dark)' }}>
+                "If we bypass the secondary system, we save 12% immediately."
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
+    </GlassCard>
   )
 }

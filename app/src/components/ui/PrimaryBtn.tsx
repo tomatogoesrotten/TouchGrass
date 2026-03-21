@@ -13,9 +13,9 @@ export function PrimaryBtn({ children, className = '', disabled, ...rest }: Prop
     <button
       className={`rounded-[12px] font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.97] ${disabled ? 'opacity-40 cursor-not-allowed' : 'hover:brightness-110'} ${className}`}
       style={{
-        backgroundColor: isDark ? '#10b981' : '#059669',
-        color: '#ffffff',
-        boxShadow: disabled ? 'none' : isDark ? '0 0 20px rgba(16,185,129,0.15)' : '0 4px 14px rgba(5,150,105,0.2)',
+        backgroundColor: isDark ? 'var(--color-accent-dark)' : 'var(--color-accent-light)',
+        color: isDark ? '#000000' : '#ffffff',
+        boxShadow: disabled ? 'none' : isDark ? '0 0 20px rgba(196, 240, 66, 0.2)' : '0 4px 14px rgba(163, 204, 41, 0.2)',
       }}
       disabled={disabled}
       {...rest}

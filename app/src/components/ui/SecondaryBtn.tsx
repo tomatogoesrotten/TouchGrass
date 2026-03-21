@@ -13,8 +13,8 @@ export function SecondaryBtn({ children, className = '', ...rest }: Props) {
     <button
       className={`rounded-[12px] font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.97] hover:brightness-110 ${className}`}
       style={{
-        backgroundColor: isDark ? '#27272a' : '#f4f4f5',
-        color: isDark ? '#fafafa' : '#09090b',
+        backgroundColor: isDark ? 'var(--color-surface-high)' : 'var(--color-surface-light-mid)',
+        color: isDark ? 'var(--color-text-dark)' : 'var(--color-text-light)',
         border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
       }}
       {...rest}
