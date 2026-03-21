@@ -7,15 +7,12 @@ interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 export function DangerBtn({ children, className = '', ...rest }: Props) {
   const theme = useTheme((s) => s.theme)
-  const bg = theme === 'dark' ? '#ff4d6a' : '#e5384b'
-  const hover = theme === 'dark' ? '#ff3355' : '#d02f42'
+  const isDark = theme === 'dark'
 
   return (
     <button
-      className={`rounded-[10px] font-bold text-sm text-white flex items-center justify-center transition-all active:scale-95 ${className}`}
-      style={{ backgroundColor: bg }}
-      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = hover)}
-      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = bg)}
+      className={`rounded-[12px] font-semibold text-sm text-white flex items-center justify-center gap-2 transition-all active:scale-[0.97] hover:brightness-110 ${className}`}
+      style={{ backgroundColor: isDark ? '#ef4444' : '#dc2626' }}
       {...rest}
     >
       {children}

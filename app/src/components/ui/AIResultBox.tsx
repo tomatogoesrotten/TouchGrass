@@ -12,7 +12,7 @@ interface Props {
 export function AIResultBox({ title, visible, children }: Props) {
   const theme = useTheme((s) => s.theme)
   const isDark = theme === 'dark'
-  const accent = isDark ? '#00e5a0' : '#00b37e'
+  const accent = isDark ? '#10b981' : '#059669'
 
   if (!visible) return null
 
@@ -21,15 +21,20 @@ export function AIResultBox({ title, visible, children }: Props) {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className="rounded-[14px] p-8 space-y-6"
+      className="rounded-[20px] p-8 space-y-6"
       style={{
-        backgroundColor: isDark ? 'rgba(0,229,160,0.03)' : 'rgba(0,179,126,0.04)',
-        borderLeft: `3px solid ${accent}`,
+        backgroundColor: isDark ? 'rgba(16,185,129,0.04)' : 'rgba(5,150,105,0.04)',
+        border: `1px solid ${isDark ? 'rgba(16,185,129,0.12)' : 'rgba(5,150,105,0.12)'}`,
       }}
     >
       <div className="flex items-center gap-3 mb-2">
-        <Sparkles size={20} color={accent} />
-        <h3 className="font-headline font-bold text-lg" style={{ color: accent }}>
+        <div
+          className="w-8 h-8 rounded-[10px] flex items-center justify-center"
+          style={{ backgroundColor: `${accent}15` }}
+        >
+          <Sparkles size={16} color={accent} />
+        </div>
+        <h3 className="font-semibold text-[15px]" style={{ color: accent }}>
           {title}
         </h3>
       </div>

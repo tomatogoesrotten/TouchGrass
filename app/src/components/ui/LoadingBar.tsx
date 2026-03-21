@@ -6,14 +6,14 @@ interface Props {
 
 export function LoadingBar({ visible }: Props) {
   const theme = useTheme((s) => s.theme)
-  const accent = theme === 'dark' ? '#00e5a0' : '#00b37e'
+  const accent = theme === 'dark' ? '#10b981' : '#059669'
 
   if (!visible) return null
 
   return (
     <div
-      className="w-48 h-[2px] rounded-full overflow-hidden"
-      style={{ backgroundColor: `${accent}33` }}
+      className="w-48 h-[3px] rounded-full overflow-hidden"
+      style={{ backgroundColor: `${accent}20` }}
     >
       <div
         className="w-1/3 h-full rounded-full loading-bar"

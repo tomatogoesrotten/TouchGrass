@@ -11,11 +11,11 @@ export function SecondaryBtn({ children, className = '', ...rest }: Props) {
 
   return (
     <button
-      className={`rounded-[10px] font-bold text-sm flex items-center justify-center transition-all active:scale-95 ${className}`}
+      className={`rounded-[12px] font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.97] hover:brightness-110 ${className}`}
       style={{
-        backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#f1f3f9',
-        color: isDark ? '#f0f1f4' : '#111318',
-        border: `1px solid ${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`,
+        backgroundColor: isDark ? '#27272a' : '#f4f4f5',
+        color: isDark ? '#fafafa' : '#09090b',
+        border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
       }}
       {...rest}
     >

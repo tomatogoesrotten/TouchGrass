@@ -7,14 +7,16 @@ interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 export function PrimaryBtn({ children, className = '', disabled, ...rest }: Props) {
   const theme = useTheme((s) => s.theme)
-  const textColor = theme === 'dark' ? '#003824' : '#ffffff'
-  const gradient = theme === 'dark' ? 'linear-gradient(45deg, #6effc0, #00e5a0)' : 'linear-gradient(45deg, #00b37e, #00e5a0)'
-  const shadow = theme === 'dark' ? '0 10px 30px rgba(0,229,160,0.15)' : '0 10px 30px rgba(0,179,126,0.15)'
+  const isDark = theme === 'dark'
 
   return (
     <button
-      className={`rounded-[10px] font-bold text-sm flex items-center justify-center gap-2 transition-transform active:scale-95 hover:scale-[0.98] ${disabled ? 'opacity-[0.35] cursor-not-allowed hover:scale-100' : ''} ${className}`}
-      style={{ background: gradient, color: textColor, boxShadow: disabled ? 'none' : shadow }}
+      className={`rounded-[12px] font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.97] ${disabled ? 'opacity-40 cursor-not-allowed' : 'hover:brightness-110'} ${className}`}
+      style={{
+        backgroundColor: isDark ? '#10b981' : '#059669',
+        color: '#ffffff',
+        boxShadow: disabled ? 'none' : isDark ? '0 0 20px rgba(16,185,129,0.15)' : '0 4px 14px rgba(5,150,105,0.2)',
+      }}
       disabled={disabled}
       {...rest}
     >

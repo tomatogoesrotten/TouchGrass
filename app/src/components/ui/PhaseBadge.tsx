@@ -10,13 +10,13 @@ interface Props {
 export function PhaseBadge({ phase, variant = 'full' }: Props) {
   const theme = useTheme((s) => s.theme)
   const color = getPhaseColor(phase, theme)
-  const label = phaseConfig[phase].label.toUpperCase()
+  const label = phaseConfig[phase].label
 
   if (variant === 'mini') {
     return (
       <span
-        className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider"
-        style={{ backgroundColor: `${color}15`, color }}
+        className="px-2.5 py-1 rounded-[8px] text-[10px] font-semibold uppercase tracking-wider"
+        style={{ backgroundColor: `${color}18`, color }}
       >
         {label}
       </span>
@@ -25,9 +25,10 @@ export function PhaseBadge({ phase, variant = 'full' }: Props) {
 
   return (
     <div
-      className="inline-flex items-center px-2 py-0.5 rounded-[6px] text-[11px] font-bold"
-      style={{ backgroundColor: `${color}1a`, color }}
+      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] text-[11px] font-semibold"
+      style={{ backgroundColor: `${color}15`, color }}
     >
+      <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color }} />
       {label}
     </div>
   )

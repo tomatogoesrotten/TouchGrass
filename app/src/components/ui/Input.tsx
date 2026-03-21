@@ -7,10 +7,10 @@ export function Input({ className = '', ...rest }: InputHTMLAttributes<HTMLInput
 
   return (
     <input
-      className={`w-full h-12 border-none rounded-[10px] px-4 text-[14.5px] font-medium transition-all outline-none ${className}`}
+      className={`w-full h-12 border-none rounded-[12px] px-4 text-sm font-medium transition-all outline-none ${className}`}
       style={{
-        backgroundColor: isDark ? '#1a1b20' : '#f1f3f9',
-        color: isDark ? '#f0f1f4' : '#111318',
+        backgroundColor: isDark ? '#1e1e22' : '#f4f4f5',
+        color: isDark ? '#fafafa' : '#09090b',
       }}
       {...rest}
     />

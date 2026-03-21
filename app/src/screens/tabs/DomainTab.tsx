@@ -1,9 +1,8 @@
 import { useState } from 'react'
-import { Globe } from 'lucide-react'
+import { Globe, Search } from 'lucide-react'
 import { useTheme } from '@/stores/theme'
 import { useSession } from '@/stores/session'
 import { useToast } from '@/stores/toast'
-import { Glass } from '@/components/ui/Glass'
 import { AIResultBox } from '@/components/ui/AIResultBox'
 
 export function DomainTab() {
@@ -14,9 +13,10 @@ export function DomainTab() {
   const [query, setQuery] = useState('')
   const [showResult, setShowResult] = useState(false)
 
-  const textPrimary = isDark ? '#f0f1f4' : '#111318'
-  const textSoft = isDark ? '#a0a5b8' : '#5a5f72'
-  const textMuted = isDark ? '#5c6178' : '#5a5f72'
+  const textPrimary = isDark ? '#fafafa' : '#09090b'
+  const textSoft = isDark ? '#a1a1aa' : '#52525b'
+  const textMuted = isDark ? '#71717a' : '#a1a1aa'
+  const border = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'
 
   function handleLookup() {
     setTimeout(() => {
@@ -34,23 +34,34 @@ export function DomainTab() {
       </p>
 
       <div className="flex gap-3">
-        <Glass className="flex-1 rounded-[10px] flex items-center px-4 py-1">
-          <Globe size={18} className="mr-3" color={textMuted} />
+        <div
+          className="flex-1 rounded-[12px] flex items-center px-4"
+          style={{
+            backgroundColor: isDark ? '#18181b' : '#ffffff',
+            border: `1px solid ${border}`,
+          }}
+        >
+          <Globe size={16} className="mr-3 flex-shrink-0" color={textMuted} />
           <input
-            className="w-full bg-transparent border-none outline-none text-sm font-medium"
+            className="w-full bg-transparent border-none outline-none text-sm py-2.5"
             style={{ color: textPrimary }}
             placeholder="Enter industry term or topic..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
-        </Glass>
-        <Glass
-          className="px-6 py-2.5 rounded-[10px] font-bold text-sm cursor-pointer transition-all hover:opacity-80"
-          style={{ color: textPrimary }}
+        </div>
+        <button
+          className="px-5 py-2.5 rounded-[12px] font-semibold text-sm flex items-center gap-2 transition-all hover:brightness-110"
+          style={{
+            backgroundColor: isDark ? '#27272a' : '#f4f4f5',
+            color: textPrimary,
+            border: `1px solid ${border}`,
+          }}
           onClick={handleLookup}
         >
+          <Search size={14} />
           Look Up
-        </Glass>
+        </button>
       </div>
 
       <AIResultBox title="Domain Intelligence" visible={showResult}>

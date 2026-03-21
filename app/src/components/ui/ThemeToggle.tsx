@@ -8,23 +8,18 @@ export function ThemeToggle() {
   return (
     <button
       onClick={toggle}
-      className="w-[44px] h-[24px] rounded-full relative p-[3px] cursor-pointer transition-colors"
-      style={{ backgroundColor: isDark ? '#343439' : '#e2e7f0' }}
+      className="w-9 h-9 rounded-[10px] flex items-center justify-center transition-all hover:brightness-110"
+      style={{
+        backgroundColor: isDark ? '#27272a' : '#f4f4f5',
+        border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
+      }}
       aria-label="Toggle theme"
     >
-      <div
-        className="w-[18px] h-[18px] rounded-full flex items-center justify-center shadow-sm transition-transform duration-200"
-        style={{
-          backgroundColor: isDark ? '#00e5a0' : '#00b37e',
-          transform: isDark ? 'translateX(20px)' : 'translateX(0)',
-        }}
-      >
-        {isDark ? (
-          <Moon size={11} color="#003824" />
-        ) : (
-          <Sun size={11} color="#fff" />
-        )}
-      </div>
+      {isDark ? (
+        <Moon size={16} color="#a1a1aa" />
+      ) : (
+        <Sun size={16} color="#52525b" />
+      )}
     </button>
   )
 }

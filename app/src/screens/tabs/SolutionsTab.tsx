@@ -13,10 +13,11 @@ export function SolutionsTab() {
   const [text, setText] = useState('')
   const [showResult, setShowResult] = useState(false)
 
-  const textPrimary = isDark ? '#f0f1f4' : '#111318'
-  const textSoft = isDark ? '#a0a5b8' : '#5a5f72'
-  const warnColor = isDark ? '#ffb347' : '#e68a00'
-  const accent = isDark ? '#00e5a0' : '#00b37e'
+  const textPrimary = isDark ? '#fafafa' : '#09090b'
+  const textSoft = isDark ? '#a1a1aa' : '#52525b'
+  const warnColor = isDark ? '#f59e0b' : '#d97706'
+  const accent = isDark ? '#10b981' : '#059669'
+  const border = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'
 
   function handleReview() {
     setTimeout(() => {
@@ -28,22 +29,27 @@ export function SolutionsTab() {
   return (
     <div className="space-y-6">
       {/* Private Card */}
-      <GlassCard className="p-6" style={{ borderLeft: `4px solid ${warnColor}` }}>
-        <div className="flex items-center gap-2 mb-4">
-          <Shield size={18} color={warnColor} />
-          <span className="font-bold text-sm" style={{ color: warnColor }}>
-            🔒 Private — Never shown to clients
+      <GlassCard className="p-6 overflow-hidden" style={{ borderLeft: `3px solid ${warnColor}` }}>
+        <div className="flex items-center gap-2 mb-5">
+          <div
+            className="w-7 h-7 rounded-[8px] flex items-center justify-center"
+            style={{ backgroundColor: `${warnColor}15` }}
+          >
+            <Shield size={14} color={warnColor} />
+          </div>
+          <span className="font-semibold text-[13px]" style={{ color: warnColor }}>
+            Private — Never shown to clients
           </span>
         </div>
         <textarea
-          className="w-full bg-transparent border-none outline-none font-headline text-[15px] leading-[1.7] min-h-[200px] p-0 resize-y"
+          className="w-full bg-transparent border-none outline-none text-[15px] leading-[1.8] min-h-[200px] p-0 resize-y"
           style={{ color: textPrimary }}
           placeholder="Draft your solution hypothesis here... The AI will help refine these into professional deliverables."
           value={text}
           onChange={(e) => setText(e.target.value)}
         />
         <div className="flex justify-end mt-4">
-          <PrimaryBtn className="px-6 py-2.5 text-sm" onClick={handleReview}>
+          <PrimaryBtn className="px-5 py-2.5 text-sm" onClick={handleReview}>
             Review My Ideas
           </PrimaryBtn>
         </div>
@@ -51,20 +57,20 @@ export function SolutionsTab() {
 
       {/* AI Result */}
       <AIResultBox title="AI Analysis & Refinement" visible={showResult}>
-        <div className="grid md:grid-cols-2 gap-4">
+        <div className="grid md:grid-cols-2 gap-3">
           {[
             { num: '01', text: 'Map technical requirements to existing infrastructure to reduce friction in Phase 2.' },
             { num: '02', text: "Budget allocation aligns with client's fiscal Q3 constraints identified in notes." },
           ].map((item) => (
             <div
               key={item.num}
-              className="p-4 rounded-[10px]"
+              className="p-4 rounded-[14px]"
               style={{
-                backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.4)',
-                border: `1px solid ${isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}`,
+                backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+                border: `1px solid ${border}`,
               }}
             >
-              <span className="font-mono text-[10px] font-bold" style={{ color: accent }}>
+              <span className="font-mono text-[10px] font-semibold" style={{ color: accent }}>
                 Optimization {item.num}
               </span>
               <p className="text-sm mt-2 leading-relaxed" style={{ color: textSoft }}>{item.text}</p>

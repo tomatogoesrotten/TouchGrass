@@ -5,14 +5,20 @@ interface Props extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode
 }
 
-export function Glass({ children, className = '', ...rest }: Props) {
+export function Glass({ children, className = '', style, ...rest }: Props) {
   const theme = useTheme((s) => s.theme)
-  const base =
-    theme === 'dark'
-      ? 'bg-[rgba(18,21,30,0.72)] border border-[rgba(255,255,255,0.08)]'
-      : 'bg-[rgba(255,255,255,0.65)] border border-[rgba(0,0,0,0.08)]'
+  const isDark = theme === 'dark'
+
   return (
-    <div className={`backdrop-blur-[16px] ${base} ${className}`} {...rest}>
+    <div
+      className={`backdrop-blur-[20px] ${className}`}
+      style={{
+        backgroundColor: isDark ? 'rgba(17,17,19,0.85)' : 'rgba(255,255,255,0.75)',
+        border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
+        ...style,
+      }}
+      {...rest}
+    >
       {children}
     </div>
   )

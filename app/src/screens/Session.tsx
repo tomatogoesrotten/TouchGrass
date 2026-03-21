@@ -1,13 +1,11 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Mic, FileText, Network, HelpCircle, BookOpen, Lock } from 'lucide-react'
+import { ArrowLeft, Mic, FileText, Network, HelpCircle, BookOpen, Lock, Download } from 'lucide-react'
 import { useTheme } from '@/stores/theme'
 import { useSession } from '@/stores/session'
 import { useRecordingTimer } from '@/hooks/useRecordingTimer'
 import { ThemeToggle } from '@/components/ui/ThemeToggle'
-import { Glass } from '@/components/ui/Glass'
 import { PhaseBadge } from '@/components/ui/PhaseBadge'
-import { SecondaryBtn } from '@/components/ui/SecondaryBtn'
 import { RecordTab } from './tabs/RecordTab'
 import { NotesTab } from './tabs/NotesTab'
 import { StructureTab } from './tabs/StructureTab'
@@ -38,63 +36,85 @@ export function Session() {
 
   if (!activeSession) return null
 
-  const accent = isDark ? '#00e5a0' : '#00b37e'
-  const textPrimary = isDark ? '#f0f1f4' : '#111318'
-  const textSoft = isDark ? '#a0a5b8' : '#5a5f72'
-  const textMuted = isDark ? '#5c6178' : '#5a5f72'
-  const warnColor = isDark ? '#ffb347' : '#e68a00'
-  const dangerColor = isDark ? '#ff4d6a' : '#e5384b'
+  const textPrimary = isDark ? '#fafafa' : '#09090b'
+  const textSoft = isDark ? '#a1a1aa' : '#52525b'
+  const textMuted = isDark ? '#71717a' : '#a1a1aa'
+  const dangerColor = isDark ? '#ef4444' : '#dc2626'
+  const border = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'
 
   const m = String(Math.floor(recSeconds / 60)).padStart(2, '0')
   const s = String(recSeconds % 60).padStart(2, '0')
 
   return (
-    <div>
-      <Glass className="fixed top-0 z-50 w-full rounded-none">
-        <div className="max-w-[1400px] mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-5">
+    <div className="min-h-screen">
+      {/* Header */}
+      <header
+        className="sticky top-0 z-50 backdrop-blur-[20px]"
+        style={{
+          backgroundColor: isDark ? 'rgba(9,9,11,0.85)' : 'rgba(245,245,247,0.85)',
+          borderBottom: `1px solid ${border}`,
+        }}
+      >
+        <div className="max-w-[1400px] mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-4">
             <button
               onClick={() => navigate('/')}
-              className="w-10 h-10 flex items-center justify-center rounded-[10px] transition-colors"
+              className="w-9 h-9 flex items-center justify-center rounded-[10px] transition-all hover:brightness-110"
               style={{
-                backgroundColor: isDark ? 'rgba(18,21,30,0.72)' : 'rgba(255,255,255,0.65)',
-                border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+                backgroundColor: isDark ? '#18181b' : '#f4f4f5',
+                border: `1px solid ${border}`,
               }}
             >
-              <ArrowLeft size={18} color={textPrimary} />
+              <ArrowLeft size={16} color={textPrimary} />
             </button>
-            <div className="flex flex-col">
-              <h1 className="text-[15.5px] font-[750] tracking-tight font-headline" style={{ color: textPrimary }}>
-                {activeSession.client}
-              </h1>
-              <div className="flex items-center gap-3 mt-0.5">
+            <div>
+              <div className="flex items-center gap-3">
+                <h1 className="text-[15px] font-bold tracking-tight" style={{ color: textPrimary }}>
+                  {activeSession.client}
+                </h1>
                 <PhaseBadge phase={activeSession.phase} variant="mini" />
-                <span className="text-xs font-medium" style={{ color: textSoft }}>{activeSession.industry}</span>
+              </div>
+              <div className="flex items-center gap-2 mt-0.5">
+                <span className="text-xs" style={{ color: textSoft }}>{activeSession.industry}</span>
+                <span className="text-[10px]" style={{ color: textMuted }}>·</span>
                 <span className="font-mono text-[11px]" style={{ color: textMuted }}>{activeSession.date}</span>
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-5">
+          <div className="flex items-center gap-3">
             {isRecording && (
               <div
-                className="flex items-center gap-3 px-4 py-2 rounded-[20px]"
+                className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-[100px]"
                 style={{
-                  backgroundColor: isDark ? 'rgba(13,14,18,0.4)' : '#f1f3f9',
-                  border: `1px solid ${isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}`,
+                  backgroundColor: `${dangerColor}12`,
+                  border: `1px solid ${dangerColor}30`,
                 }}
               >
-                <div className="w-2 h-2 rounded-full intel-pulse animate-pulse" style={{ backgroundColor: dangerColor }} />
-                <span className="font-mono font-bold tracking-tighter text-lg" style={{ color: dangerColor }}>
+                <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: dangerColor }} />
+                <span className="font-mono font-bold text-sm" style={{ color: dangerColor }}>
                   {m}:{s}
                 </span>
               </div>
             )}
             <ThemeToggle />
-            <SecondaryBtn className="px-5 py-2 text-sm">Export</SecondaryBtn>
+            <button
+              className="w-9 h-9 flex items-center justify-center rounded-[10px] transition-all hover:brightness-110"
+              style={{
+                backgroundColor: isDark ? '#18181b' : '#f4f4f5',
+                border: `1px solid ${border}`,
+              }}
+            >
+              <Download size={16} color={textSoft} />
+            </button>
           </div>
         </div>
-        <div className="max-w-[1400px] mx-auto px-6">
-          <nav className="flex items-center gap-8 overflow-x-auto">
+
+        {/* Pill Tab Bar */}
+        <div className="max-w-[1400px] mx-auto px-6 pb-3">
+          <nav
+            className="inline-flex items-center gap-1 rounded-[100px] p-1"
+            style={{ backgroundColor: isDark ? '#18181b' : '#ffffff', border: `1px solid ${border}` }}
+          >
             {tabs.map((tab) => {
               const isActive = activeTab === tab.id
               const Icon = tab.icon
@@ -102,21 +122,20 @@ export function Session() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className="flex items-center gap-2 py-4 transition-all relative whitespace-nowrap"
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-[100px] transition-all text-[13px] font-medium whitespace-nowrap"
                   style={{
-                    color: isActive ? accent : textMuted,
-                    borderBottom: isActive ? `2.5px solid ${accent}` : '2.5px solid transparent',
+                    backgroundColor: isActive ? (isDark ? '#27272a' : '#f4f4f5') : 'transparent',
+                    color: isActive ? (isDark ? '#fafafa' : '#09090b') : textMuted,
                   }}
                 >
-                  <Icon size={20} />
-                  <span className="text-sm font-bold font-headline">{tab.label}</span>
+                  <Icon size={15} />
+                  {tab.label}
                   {tab.id === 'solutions' && (
                     <span
-                      className="absolute -top-1 -right-9 px-1.5 py-0.5 rounded text-[9px] font-bold"
+                      className="ml-1 px-1.5 py-0.5 rounded-[6px] text-[9px] font-bold uppercase"
                       style={{
-                        backgroundColor: `${warnColor}26`,
-                        color: warnColor,
-                        border: `1px solid ${warnColor}33`,
+                        backgroundColor: isDark ? 'rgba(245,158,11,0.12)' : 'rgba(217,119,6,0.1)',
+                        color: isDark ? '#f59e0b' : '#d97706',
                       }}
                     >
                       Private
@@ -127,8 +146,9 @@ export function Session() {
             })}
           </nav>
         </div>
-      </Glass>
-      <main className="pt-40 pb-24 px-6">
+      </header>
+
+      <main className="pt-8 pb-24 px-6">
         <div className="max-w-[720px] mx-auto">
           {activeTab === 'record' && <RecordTab />}
           {activeTab === 'notes' && <NotesTab />}
