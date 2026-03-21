@@ -37,7 +37,7 @@ export function Session() {
   const s = String(recSeconds % 60).padStart(2, '0')
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col relative" style={{ zIndex: 1 }}>
       {/* Header */}
       <header
         className="sticky top-0 z-50 backdrop-blur-[20px]"

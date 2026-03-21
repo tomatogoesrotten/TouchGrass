@@ -81,9 +81,11 @@ export function AnimatedBackground() {
     }
 
     const render = () => {
-      ctx.clearRect(0, 0, width, height)
+      // Fill canvas with the background color so body can be transparent
+      ctx.fillStyle = isDark ? '#0a0a0a' : '#f5f5f7'
+      ctx.fillRect(0, 0, width, height)
 
-      const dotColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)'
+      const dotColor = isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)'
       const activeDotColor = isDark ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.6)'
       const trailColorFunc = (alpha: number) => isDark ? `rgba(255, 255, 255, ${alpha})` : `rgba(0, 0, 0, ${alpha})`
 
@@ -189,7 +191,8 @@ export function AnimatedBackground() {
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 pointer-events-none z-[-1]"
+      className="fixed inset-0 pointer-events-none"
+      style={{ zIndex: 0 }}
     />
   )
 }

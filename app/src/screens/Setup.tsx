@@ -49,7 +49,7 @@ export function Setup() {
   }
 
   return (
-    <main className="max-w-[540px] mx-auto px-6 pt-12 pb-24">
+    <main className="max-w-[540px] mx-auto px-6 pt-12 pb-24 relative" style={{ zIndex: 1 }}>
       {/* Nav */}
       <header className="flex justify-between items-center mb-10">
         <button

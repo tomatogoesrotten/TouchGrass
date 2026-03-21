@@ -59,22 +59,26 @@
 body {
   font-family: var(--font-body);
   min-height: 100vh;
-  transition: background-color 0.3s ease, color 0.3s ease;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   margin: 0;
 }
 
+#root {
+  position: relative;
+  z-index: 1;
+}
+
 /* ── Dark Mode Background ── */
 .dark body,
 body.dark-mesh {
-  background-color: var(--color-bg-dark);
+  background-color: transparent;
   color: var(--color-text-dark);
 }
 
 /* ── Light Mode Background ── */
 body.light-mesh {
-  background-color: var(--color-bg-light);
+  background-color: transparent;
   color: var(--color-text-light);
 }
 
