@@ -31,8 +31,6 @@ export function Dashboard() {
   const textPrimary = isDark ? '#fafafa' : '#09090b'
   const textSoft = isDark ? '#a1a1aa' : '#52525b'
   const textMuted = isDark ? '#71717a' : '#a1a1aa'
-  const surface = isDark ? '#18181b' : '#ffffff'
-  const surfaceLow = isDark ? '#111113' : '#f4f4f5'
   const border = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'
 
   return (

@@ -18,7 +18,6 @@ export function RecordTab() {
   const { isRecording, setRecording, setRecSeconds, tags, addTag, removeTag } = useSession()
   const toast = useToast((s) => s.show)
 
-  const accent = isDark ? '#10b981' : '#059669'
   const textPrimary = isDark ? '#fafafa' : '#09090b'
   const textSoft = isDark ? '#a1a1aa' : '#52525b'
   const textMuted = isDark ? '#71717a' : '#a1a1aa'
