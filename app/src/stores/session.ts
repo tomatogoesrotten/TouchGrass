@@ -29,6 +29,7 @@ interface SessionStore {
   sessions: SessionMeta[]
   activeSession: Session | null
   isRecording: boolean
+  isPaused: boolean
   recSeconds: number
   activeTab: string
   deleteTarget: SessionMeta | null
@@ -44,6 +45,7 @@ interface SessionStore {
   addTag: (label: string, emoji: string) => void
   removeTag: (id: string) => void
   setRecording: (v: boolean) => void
+  setRecPaused: (v: boolean) => void
   setRecSeconds: (v: number) => void
   setActiveTab: (tab: string) => void
   setDeleteTarget: (s: SessionMeta | null) => void
@@ -76,6 +78,7 @@ export const useSession = create<SessionStore>((set, get) => ({
   sessions: [],
   activeSession: null,
   isRecording: false,
+  isPaused: false,
   recSeconds: 0,
   activeTab: 'record',
   deleteTarget: null,
@@ -183,7 +186,8 @@ export const useSession = create<SessionStore>((set, get) => ({
     })
   },
 
-  setRecording: (v) => set({ isRecording: v }),
+  setRecording: (v) => set({ isRecording: v, ...(!v ? { isPaused: false } : {}) }),
+  setRecPaused: (v) => set({ isPaused: v }),
   setRecSeconds: (v) => set({ recSeconds: v }),
   setActiveTab: (tab) => set({ activeTab: tab }),
   setDeleteTarget: (s) => set({ deleteTarget: s }),

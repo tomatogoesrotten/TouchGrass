@@ -41,6 +41,15 @@ export async function migrate() {
   await pool.query(`
     ALTER TABLE sessions ADD COLUMN IF NOT EXISTS audio_mime TEXT DEFAULT '';
   `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS audio_segments (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      session_id UUID NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+      audio_data TEXT NOT NULL,
+      audio_mime TEXT NOT NULL DEFAULT 'audio/webm',
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
+  `);
   console.log('[db] migration complete');
 }
 

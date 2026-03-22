@@ -1,5 +1,5 @@
 import { useRef, useCallback, useEffect, useState } from 'react'
-import { X, Mic, Upload, Download, Loader2, FileText } from 'lucide-react'
+import { X, Mic, Upload, Download, Loader2, FileText, Pause, Play, Square, Trash2 } from 'lucide-react'
 import { useTheme } from '@/stores/theme'
 import { useSession } from '@/stores/session'
 import { useToast } from '@/stores/toast'
@@ -13,6 +13,12 @@ const quickTags = [
   { label: 'Action', emoji: '📌' },
   { label: 'Unclear', emoji: '🤔' },
 ]
+
+interface Segment {
+  id: string
+  url: string
+  blob?: Blob
+}
 
 function blobToBase64(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -37,18 +43,18 @@ export function RecordTab() {
   const theme = useTheme((s) => s.theme)
   const isDark = theme === 'dark'
   const {
-    activeSession, isRecording, setRecording, setRecSeconds,
+    activeSession, isRecording, isPaused, setRecording, setRecPaused, setRecSeconds,
     addTag, removeTag, updateActiveSession,
   } = useSession()
   const toast = useToast((s) => s.show)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const streamRef = useRef<MediaStream | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
   const mimeTypeRef = useRef('audio/webm')
-  const lastBlobRef = useRef<Blob | null>(null)
-  const [audioUrl, setAudioUrl] = useState<string | null>(null)
+  const [segments, setSegments] = useState<Segment[]>([])
   const [importing, setImporting] = useState(false)
   const [savingAudio, setSavingAudio] = useState(false)
-  const [loadingAudio, setLoadingAudio] = useState(false)
+  const [loadingSegments, setLoadingSegments] = useState(false)
   const [transcribing, setTranscribing] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -56,25 +62,26 @@ export function RecordTab() {
   const textSoft = isDark ? '#a1a1aa' : '#52525b'
   const textMuted = isDark ? '#71717a' : '#a1a1aa'
   const dangerColor = isDark ? '#ef4444' : '#dc2626'
+  const warnColor = isDark ? '#ff8a00' : '#e67d00'
   const border = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'
   const accent = isDark ? '#c4f042' : '#a3cc29'
 
   const tags = activeSession?.quickTags ?? []
   const transcript = activeSession?.transcript ?? ''
 
-  // Load persisted audio on mount
+  // Load persisted audio segments on mount
   useEffect(() => {
     if (!activeSession?.id) return
-    setLoadingAudio(true)
-    api.getAudio(activeSession.id)
-      .then(({ audio, mimeType }) => {
-        const blob = base64ToBlob(audio, mimeType)
-        lastBlobRef.current = blob
-        setAudioUrl(URL.createObjectURL(blob))
-        mimeTypeRef.current = mimeType
+    setLoadingSegments(true)
+    api.getAudioSegments(activeSession.id)
+      .then((data) => {
+        setSegments(data.map((s) => ({
+          id: s.id,
+          url: URL.createObjectURL(base64ToBlob(s.audio, s.mimeType)),
+        })))
       })
       .catch(() => { /* no audio stored yet */ })
-      .finally(() => setLoadingAudio(false))
+      .finally(() => setLoadingSegments(false))
   }, [activeSession?.id])
 
   const stopMediaRecorder = useCallback(() => {
@@ -83,18 +90,29 @@ export function RecordTab() {
     }
   }, [])
 
-  useEffect(() => {
-    return () => { stopMediaRecorder() }
-  }, [stopMediaRecorder])
+  const releaseStream = useCallback(() => {
+    streamRef.current?.getTracks().forEach((t) => t.stop())
+    streamRef.current = null
+  }, [])
 
-  async function persistAudio(blob: Blob) {
+  useEffect(() => {
+    return () => {
+      stopMediaRecorder()
+      releaseStream()
+    }
+  }, [stopMediaRecorder, releaseStream])
+
+  async function persistSegment(blob: Blob) {
     if (!activeSession?.id) return
     setSavingAudio(true)
     try {
       const base64 = await blobToBase64(blob)
-      await api.uploadAudio(activeSession.id, base64, blob.type)
+      const { id } = await api.addAudioSegment(activeSession.id, base64, blob.type)
+      const url = URL.createObjectURL(blob)
+      setSegments((prev) => [...prev, { id, url, blob }])
     } catch (err) {
-      console.error('Failed to persist audio:', err)
+      console.error('Failed to persist audio segment:', err)
+      toast('Failed to save audio', 'error')
     } finally {
       setSavingAudio(false)
     }
@@ -106,7 +124,11 @@ export function RecordTab() {
     try {
       const base64 = await blobToBase64(blob)
       const { result } = await api.transcribeAudio(base64, blob.type, activeSession.id)
-      updateActiveSession({ transcript: result })
+      if (result) {
+        const existing = useSession.getState().activeSession?.transcript ?? ''
+        const combined = existing ? existing + '\n\n---\n\n' + result : result
+        updateActiveSession({ transcript: combined })
+      }
       toast('Transcription complete', 'success')
     } catch (err) {
       console.error('Transcription failed:', err)
@@ -124,15 +146,9 @@ export function RecordTab() {
     return 'audio/webm'
   }
 
-  function toggleRecording() {
-    if (isRecording) {
-      stopMediaRecorder()
-      setRecording(false)
-      toast('Recording saved')
-      return
-    }
-
+  function startRecording() {
     navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
+      streamRef.current = stream
       audioChunksRef.current = []
       const mime = getSupportedMimeType()
       mimeTypeRef.current = mime
@@ -142,21 +158,51 @@ export function RecordTab() {
       }
       recorder.onstop = () => {
         const blob = new Blob(audioChunksRef.current, { type: recorder.mimeType })
-        const url = URL.createObjectURL(blob)
-        setAudioUrl(url)
-        lastBlobRef.current = blob
-        stream.getTracks().forEach((t) => t.stop())
-        persistAudio(blob)
+        releaseStream()
+        persistSegment(blob)
         transcribeBlob(blob)
       }
       recorder.start(1000)
       mediaRecorderRef.current = recorder
-      setAudioUrl(null)
       setRecSeconds(0)
       setRecording(true)
+      setRecPaused(false)
     }).catch(() => {
       toast('Microphone access denied — check browser permissions', 'error')
     })
+  }
+
+  function pauseRecording() {
+    mediaRecorderRef.current?.pause()
+    setRecPaused(true)
+  }
+
+  function resumeRecording() {
+    mediaRecorderRef.current?.resume()
+    setRecPaused(false)
+  }
+
+  function stopRecording() {
+    stopMediaRecorder()
+    setRecording(false)
+    setRecPaused(false)
+    toast('Recording saved')
+  }
+
+  async function deleteSegment(segmentId: string) {
+    if (!activeSession?.id) return
+    try {
+      if (segmentId !== 'legacy') {
+        await api.deleteAudioSegment(activeSession.id, segmentId)
+      }
+      setSegments((prev) => {
+        const seg = prev.find((s) => s.id === segmentId)
+        if (seg) URL.revokeObjectURL(seg.url)
+        return prev.filter((s) => s.id !== segmentId)
+      })
+    } catch {
+      toast('Failed to delete recording', 'error')
+    }
   }
 
   function handleAddTag(label: string, emoji: string) {
@@ -164,11 +210,10 @@ export function RecordTab() {
     toast(`${emoji} ${label} tagged`)
   }
 
-  function handleExportAudio() {
-    if (!audioUrl) return
+  function handleExportAudio(url: string) {
     const ext = mimeTypeRef.current.includes('mp4') ? 'mp4' : 'webm'
     const a = document.createElement('a')
-    a.href = audioUrl
+    a.href = url
     a.download = `recording-${activeSession?.client || 'session'}-${new Date().toISOString().slice(0, 10)}.${ext}`
     a.click()
   }
@@ -176,16 +221,13 @@ export function RecordTab() {
   async function handleImportAudio(file: File) {
     setImporting(true)
     try {
-      const url = URL.createObjectURL(file)
-      setAudioUrl(url)
-      lastBlobRef.current = file
-      mimeTypeRef.current = file.type || 'audio/mpeg'
-      toast(`Imported: ${file.name}`)
-
       if (activeSession?.id) {
         const base64 = await blobToBase64(file)
-        await api.uploadAudio(activeSession.id, base64, file.type || 'audio/mpeg')
-        toast('Audio saved to session', 'success')
+        const { id } = await api.addAudioSegment(activeSession.id, base64, file.type || 'audio/mpeg')
+        const url = URL.createObjectURL(file)
+        setSegments((prev) => [...prev, { id, url, blob: file }])
+        mimeTypeRef.current = file.type || 'audio/mpeg'
+        toast(`Imported: ${file.name}`, 'success')
       }
     } catch {
       toast('Failed to import audio file', 'error')
@@ -194,10 +236,12 @@ export function RecordTab() {
     }
   }
 
-  function handleRetranscribe() {
-    if (lastBlobRef.current) {
-      transcribeBlob(lastBlobRef.current)
+  async function handleTranscribeSegment(seg: Segment) {
+    if (!seg.blob) {
+      toast('Audio data not available for re-transcription', 'error')
+      return
     }
+    transcribeBlob(seg.blob)
   }
 
   return (
@@ -233,46 +277,68 @@ export function RecordTab() {
           >
             {importing ? <Loader2 size={14} color={textMuted} className="animate-spin" /> : <Upload size={14} color={textMuted} />}
           </button>
-          <button
-            className="w-8 h-8 rounded-[8px] flex items-center justify-center transition-all hover:brightness-110 disabled:opacity-30"
-            style={{
-              backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
-              border: `1px solid ${border}`,
-            }}
-            onClick={handleExportAudio}
-            disabled={!audioUrl}
-            title="Export recording"
-          >
-            <Download size={14} color={textMuted} />
-          </button>
         </div>
       </div>
       <div className="flex-1 overflow-y-auto space-y-8 pr-2" style={{ scrollbarWidth: 'thin', scrollbarColor: `${textMuted} transparent` }}>
-        <div className="flex flex-col items-center justify-center gap-5 py-4">
-          <button
-            onClick={toggleRecording}
-            disabled={transcribing}
-            className="group relative px-8 py-4 rounded-[100px] font-bold text-[15px] flex items-center gap-3 transition-all active:scale-[0.97] record-pulse disabled:opacity-60"
-            style={{
-              backgroundColor: isRecording ? dangerColor : 'var(--color-accent-dark)',
-              color: isRecording ? '#ffffff' : '#000000',
-              boxShadow: isRecording
-                ? `0 0 30px ${dangerColor}40`
-                : `0 0 30px rgba(196, 240, 66, 0.4)`,
-            }}
-          >
-            {isRecording ? (
-              <>
-                <span className="w-3 h-3 bg-white rounded-[3px]" />
-                Stop Recording
-              </>
-            ) : (
-              <>
-                <span className="w-3 h-3 rounded-full bg-black" />
-                Start Recording
-              </>
-            )}
-          </button>
+        {/* Recording controls */}
+        <div className="flex flex-col items-center justify-center gap-4 py-4">
+          {!isRecording ? (
+            <button
+              onClick={startRecording}
+              disabled={transcribing}
+              className="group relative px-8 py-4 rounded-[100px] font-bold text-[15px] flex items-center gap-3 transition-all active:scale-[0.97] record-pulse disabled:opacity-60"
+              style={{
+                backgroundColor: 'var(--color-accent-dark)',
+                color: '#000000',
+                boxShadow: '0 0 30px rgba(196, 240, 66, 0.4)',
+              }}
+            >
+              <span className="w-3 h-3 rounded-full bg-black" />
+              Start Recording
+            </button>
+          ) : (
+            <div className="flex items-center gap-3">
+              {isPaused ? (
+                <button
+                  onClick={resumeRecording}
+                  className="px-6 py-3.5 rounded-[100px] font-bold text-[14px] flex items-center gap-2.5 transition-all active:scale-[0.97]"
+                  style={{
+                    backgroundColor: 'var(--color-accent-dark)',
+                    color: '#000000',
+                    boxShadow: '0 0 20px rgba(196, 240, 66, 0.3)',
+                  }}
+                >
+                  <Play size={15} fill="black" />
+                  Resume
+                </button>
+              ) : (
+                <button
+                  onClick={pauseRecording}
+                  className="px-6 py-3.5 rounded-[100px] font-bold text-[14px] flex items-center gap-2.5 transition-all active:scale-[0.97]"
+                  style={{
+                    backgroundColor: warnColor,
+                    color: '#ffffff',
+                    boxShadow: `0 0 20px ${warnColor}40`,
+                  }}
+                >
+                  <Pause size={15} />
+                  Pause
+                </button>
+              )}
+              <button
+                onClick={stopRecording}
+                className="px-6 py-3.5 rounded-[100px] font-bold text-[14px] flex items-center gap-2.5 transition-all active:scale-[0.97]"
+                style={{
+                  backgroundColor: dangerColor,
+                  color: '#ffffff',
+                  boxShadow: `0 0 20px ${dangerColor}40`,
+                }}
+              >
+                <Square size={13} fill="white" />
+                Stop
+              </button>
+            </div>
+          )}
           {(savingAudio || transcribing) && (
             <div className="flex items-center gap-2 text-[11px] font-medium" style={{ color: textMuted }}>
               <Loader2 size={12} className="animate-spin" />
@@ -281,35 +347,68 @@ export function RecordTab() {
           )}
         </div>
 
-        {/* Audio Player */}
-        {loadingAudio && (
+        {/* Audio Segments */}
+        {loadingSegments && (
           <div className="flex items-center gap-2 justify-center py-4">
             <Loader2 size={14} className="animate-spin" color={textMuted} />
-            <span className="text-[12px]" style={{ color: textMuted }}>Loading audio...</span>
+            <span className="text-[12px]" style={{ color: textMuted }}>Loading recordings...</span>
           </div>
         )}
-        {audioUrl && !isRecording && (
-          <div className="space-y-2">
-            <h3 className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: textMuted }}>
-              Audio
-            </h3>
-            <div
-              className="rounded-[12px] p-3"
-              style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', border: `1px solid ${border}` }}
-            >
-              <audio controls src={audioUrl} className="w-full h-8" style={{ filter: isDark ? 'invert(1) hue-rotate(180deg) opacity(0.8)' : 'opacity(0.8)' }} />
+        {segments.length > 0 && !isRecording && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: textMuted }}>
+                Recordings ({segments.length})
+              </h3>
             </div>
-            <button
-              className="flex items-center gap-2 text-[11px] font-semibold transition-opacity hover:opacity-80"
-              style={{ color: accent }}
-              onClick={handleExportAudio}
-            >
-              <Download size={12} />
-              Download recording
-            </button>
+            <div className="space-y-2">
+              {segments.map((seg, i) => (
+                <div
+                  key={seg.id}
+                  className="rounded-[12px] p-3"
+                  style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', border: `1px solid ${border}` }}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-semibold" style={{ color: textSoft }}>
+                      #{i + 1}
+                    </span>
+                    <div className="flex items-center gap-1">
+                      {seg.blob && !transcribing && (
+                        <button
+                          className="w-6 h-6 rounded-[6px] flex items-center justify-center transition-all hover:brightness-110"
+                          style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)' }}
+                          onClick={() => handleTranscribeSegment(seg)}
+                          title="Transcribe this segment"
+                        >
+                          <FileText size={11} color={textMuted} />
+                        </button>
+                      )}
+                      <button
+                        className="w-6 h-6 rounded-[6px] flex items-center justify-center transition-all hover:brightness-110"
+                        style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)' }}
+                        onClick={() => handleExportAudio(seg.url)}
+                        title="Download"
+                      >
+                        <Download size={11} color={textMuted} />
+                      </button>
+                      <button
+                        className="w-6 h-6 rounded-[6px] flex items-center justify-center transition-all hover:brightness-110"
+                        style={{ backgroundColor: isDark ? 'rgba(255,77,106,0.08)' : 'rgba(229,56,75,0.06)' }}
+                        onClick={() => deleteSegment(seg.id)}
+                        title="Delete recording"
+                      >
+                        <Trash2 size={11} color={dangerColor} />
+                      </button>
+                    </div>
+                  </div>
+                  <audio controls src={seg.url} className="w-full h-8" style={{ filter: isDark ? 'invert(1) hue-rotate(180deg) opacity(0.8)' : 'opacity(0.8)' }} />
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
+        {/* Quick Tags */}
         <div className="space-y-3">
           <h3 className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: textMuted }}>
             Quick Tags
@@ -332,6 +431,7 @@ export function RecordTab() {
           </div>
         </div>
 
+        {/* Tagged Moments */}
         <div className="space-y-2">
           {tags.map((tag) => (
             <div
@@ -363,39 +463,23 @@ export function RecordTab() {
           ))}
         </div>
 
+        {/* Transcript */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-[15px] font-bold" style={{ color: textPrimary }}>Transcript</h2>
-            <div className="flex items-center gap-2">
-              {audioUrl && !isRecording && !transcribing && (
-                <button
-                  className="flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-[8px] transition-all hover:brightness-110"
-                  style={{
-                    backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
-                    color: textSoft,
-                    border: `1px solid ${border}`,
-                  }}
-                  onClick={handleRetranscribe}
-                  title="Re-transcribe audio"
-                >
-                  <FileText size={11} />
-                  Transcribe
-                </button>
-              )}
-              <span
-                className="text-[11px] font-medium px-2.5 py-1 rounded-[8px]"
-                style={{ backgroundColor: isDark ? 'rgba(196,240,66,0.12)' : 'rgba(163,204,41,0.12)', color: 'var(--color-accent-dark)' }}
-              >
-                {transcribing ? 'Transcribing...' : isRecording ? 'Recording...' : transcript ? 'Captured' : 'Ready'}
-              </span>
-            </div>
+            <span
+              className="text-[11px] font-medium px-2.5 py-1 rounded-[8px]"
+              style={{ backgroundColor: isDark ? 'rgba(196,240,66,0.12)' : 'rgba(163,204,41,0.12)', color: 'var(--color-accent-dark)' }}
+            >
+              {transcribing ? 'Transcribing...' : isRecording ? (isPaused ? 'Paused' : 'Recording...') : transcript ? 'Captured' : 'Ready'}
+            </span>
           </div>
           <div className="min-h-[200px] p-5 overflow-y-auto rounded-[16px]" style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', border: `1px solid ${border}` }}>
             {transcribing ? (
               <div className="flex flex-col items-center justify-center gap-3 py-8">
                 <Loader2 size={20} className="animate-spin" color={accent} />
                 <p className="text-sm font-medium" style={{ color: textSoft }}>Transcribing your recording...</p>
-                <p className="text-xs" style={{ color: textMuted }}>This may take a moment</p>
+                <p className="text-xs" style={{ color: textMuted }}>Identifying speakers and formatting</p>
               </div>
             ) : transcript ? (
               <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: textSoft }}>{transcript}</p>

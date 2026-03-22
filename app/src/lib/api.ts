@@ -42,6 +42,13 @@ export interface QuickTag {
   note: string
 }
 
+export interface AudioSegment {
+  id: string
+  audio: string
+  mimeType: string
+  createdAt: string | null
+}
+
 export const api = {
   listSessions: () =>
     request<SessionMeta[]>('/api/sessions'),
@@ -97,14 +104,19 @@ export const api = {
   getExportUrl: (id: string, format: 'json' | 'markdown' | 'pdf') =>
     `${BASE}/api/export/${id}/${format}`,
 
-  uploadAudio: (id: string, audio: string, mimeType: string) =>
-    request<{ success: boolean }>(`/api/sessions/${id}/audio`, {
-      method: 'PUT',
+  addAudioSegment: (sessionId: string, audio: string, mimeType: string) =>
+    request<{ id: string; createdAt: string }>(`/api/sessions/${sessionId}/audio`, {
+      method: 'POST',
       body: JSON.stringify({ audio, mimeType }),
     }),
 
-  getAudio: (id: string) =>
-    request<{ audio: string; mimeType: string }>(`/api/sessions/${id}/audio`),
+  getAudioSegments: (sessionId: string) =>
+    request<AudioSegment[]>(`/api/sessions/${sessionId}/audio`),
+
+  deleteAudioSegment: (sessionId: string, segmentId: string) =>
+    request<{ success: boolean }>(`/api/sessions/${sessionId}/audio/${segmentId}`, {
+      method: 'DELETE',
+    }),
 
   transcribeAudio: (audio: string, mimeType: string, sessionId?: string) =>
     request<{ result: string }>('/api/ai/transcribe', {

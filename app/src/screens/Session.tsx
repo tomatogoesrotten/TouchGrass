@@ -18,7 +18,7 @@ export function Session() {
   const navigate = useNavigate()
   const theme = useTheme((s) => s.theme)
   const isDark = theme === 'dark'
-  const { activeSession, isRecording, recSeconds } = useSession()
+  const { activeSession, isRecording, isPaused, recSeconds } = useSession()
   const [showExport, setShowExport] = useState(false)
 
   useRecordingTimer()
@@ -33,6 +33,7 @@ export function Session() {
   const textSoft = isDark ? '#a1a1aa' : '#52525b'
   const textMuted = isDark ? '#71717a' : '#a1a1aa'
   const dangerColor = isDark ? 'var(--color-danger-dark)' : 'var(--color-danger-light)'
+  const warnColor = isDark ? 'var(--color-warn-dark)' : 'var(--color-warn-light)'
   const border = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'
 
   const m = String(Math.floor(recSeconds / 60)).padStart(2, '0')
@@ -78,13 +79,17 @@ export function Session() {
               <div
                 className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-[100px]"
                 style={{
-                  backgroundColor: isDark ? 'rgba(255,77,106,0.12)' : 'rgba(229,56,75,0.12)',
-                  border: `1px solid ${isDark ? 'rgba(255,77,106,0.3)' : 'rgba(229,56,75,0.3)'}`,
+                  backgroundColor: isPaused
+                    ? (isDark ? 'rgba(255,138,0,0.12)' : 'rgba(230,125,0,0.12)')
+                    : (isDark ? 'rgba(255,77,106,0.12)' : 'rgba(229,56,75,0.12)'),
+                  border: `1px solid ${isPaused
+                    ? (isDark ? 'rgba(255,138,0,0.3)' : 'rgba(230,125,0,0.3)')
+                    : (isDark ? 'rgba(255,77,106,0.3)' : 'rgba(229,56,75,0.3)')}`,
                 }}
               >
-                <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: dangerColor }} />
-                <span className="font-mono font-bold text-sm" style={{ color: dangerColor }}>
-                  {m}:{s}
+                <div className={`w-2 h-2 rounded-full ${isPaused ? '' : 'animate-pulse'}`} style={{ backgroundColor: isPaused ? warnColor : dangerColor }} />
+                <span className="font-mono font-bold text-sm" style={{ color: isPaused ? warnColor : dangerColor }}>
+                  {m}:{s}{isPaused ? ' · Paused' : ''}
                 </span>
               </div>
             )}

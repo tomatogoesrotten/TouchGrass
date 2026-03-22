@@ -115,48 +115,90 @@ router.patch('/:id', async (req, res) => {
   }
 });
 
-router.put('/:id/audio', async (req, res) => {
+// Audio segments — POST adds a new segment
+router.post('/:id/audio', async (req, res) => {
   try {
     const { audio, mimeType } = req.body;
     if (!audio) {
       res.status(400).json({ error: 'audio data is required' });
       return;
     }
-    const { rows } = await pool.query(
-      `UPDATE sessions SET audio_data = $1, audio_mime = $2, updated_at = NOW()
-       WHERE id = $3 RETURNING id`,
-      [audio, mimeType || 'audio/webm', req.params.id]
-    );
-    if (rows.length === 0) {
+    // Verify session exists
+    const { rows: sessionRows } = await pool.query('SELECT id FROM sessions WHERE id = $1', [req.params.id]);
+    if (sessionRows.length === 0) {
       res.status(404).json({ error: 'Session not found' });
+      return;
+    }
+    const { rows } = await pool.query(
+      `INSERT INTO audio_segments (session_id, audio_data, audio_mime)
+       VALUES ($1, $2, $3) RETURNING id, created_at`,
+      [req.params.id, audio, mimeType || 'audio/webm']
+    );
+    await pool.query('UPDATE sessions SET updated_at = NOW() WHERE id = $1', [req.params.id]);
+    res.status(201).json({ id: rows[0].id, createdAt: rows[0].created_at });
+  } catch (err) {
+    console.error('[sessions] audio segment upload error:', err);
+    res.status(500).json({ error: 'Failed to upload audio segment' });
+  }
+});
+
+// Audio segments — GET returns all segments (with backward compat for legacy audio_data)
+router.get('/:id/audio', async (req, res) => {
+  try {
+    // Check new segments table first
+    const { rows } = await pool.query(
+      'SELECT id, audio_data, audio_mime, created_at FROM audio_segments WHERE session_id = $1 ORDER BY created_at',
+      [req.params.id]
+    );
+    if (rows.length > 0) {
+      res.json(rows.map((r) => ({
+        id: r.id,
+        audio: r.audio_data,
+        mimeType: r.audio_mime,
+        createdAt: r.created_at,
+      })));
+      return;
+    }
+    // Fall back to legacy audio_data column
+    const { rows: sessionRows } = await pool.query(
+      'SELECT audio_data, audio_mime FROM sessions WHERE id = $1',
+      [req.params.id]
+    );
+    if (sessionRows.length === 0) {
+      res.status(404).json({ error: 'Session not found' });
+      return;
+    }
+    if (sessionRows[0].audio_data) {
+      res.json([{
+        id: 'legacy',
+        audio: sessionRows[0].audio_data,
+        mimeType: sessionRows[0].audio_mime || 'audio/webm',
+        createdAt: null,
+      }]);
+      return;
+    }
+    res.json([]);
+  } catch (err) {
+    console.error('[sessions] audio segments fetch error:', err);
+    res.status(500).json({ error: 'Failed to get audio segments' });
+  }
+});
+
+// Audio segments — DELETE one segment
+router.delete('/:id/audio/:segmentId', async (req, res) => {
+  try {
+    const { rowCount } = await pool.query(
+      'DELETE FROM audio_segments WHERE id = $1 AND session_id = $2',
+      [req.params.segmentId, req.params.id]
+    );
+    if (rowCount === 0) {
+      res.status(404).json({ error: 'Segment not found' });
       return;
     }
     res.json({ success: true });
   } catch (err) {
-    console.error('[sessions] audio upload error:', err);
-    res.status(500).json({ error: 'Failed to upload audio' });
-  }
-});
-
-router.get('/:id/audio', async (req, res) => {
-  try {
-    const { rows } = await pool.query(
-      'SELECT audio_data, audio_mime FROM sessions WHERE id = $1',
-      [req.params.id]
-    );
-    if (rows.length === 0) {
-      res.status(404).json({ error: 'Session not found' });
-      return;
-    }
-    const { audio_data, audio_mime } = rows[0];
-    if (!audio_data) {
-      res.status(404).json({ error: 'No audio data' });
-      return;
-    }
-    res.json({ audio: audio_data, mimeType: audio_mime || 'audio/webm' });
-  } catch (err) {
-    console.error('[sessions] audio download error:', err);
-    res.status(500).json({ error: 'Failed to get audio' });
+    console.error('[sessions] audio segment delete error:', err);
+    res.status(500).json({ error: 'Failed to delete audio segment' });
   }
 });
 

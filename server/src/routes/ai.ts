@@ -204,17 +204,51 @@ router.post('/transcribe', async (req, res) => {
       file,
     });
 
-    const result = transcription.text || '';
-
-    // Save transcript to session if sessionId provided
-    if (sessionId) {
-      await pool.query(
-        `UPDATE sessions SET transcript = $1, updated_at = NOW() WHERE id = $2`,
-        [result, sessionId]
-      );
+    const rawText = transcription.text || '';
+    if (!rawText.trim()) {
+      res.json({ result: '' });
+      return;
     }
 
-    res.json({ result });
+    // Speaker diarization via GPT
+    let attendees = '';
+    let industry = '';
+    if (sessionId) {
+      const session = await getSession(sessionId);
+      if (session) {
+        attendees = (session.attendees as string) || '';
+        industry = (session.industry as string) || '';
+      }
+    }
+
+    const model = await getModel();
+    const diarizePrompt = `You are a meeting transcript formatter. Identify distinct speakers in this raw transcript and label them.
+
+Rules:
+- Detect speaker changes based on topic shifts, question-answer patterns, and conversational flow
+- Label speakers as "Person 1", "Person 2", etc.${attendees ? `\n- Known attendees: ${attendees}. If you can match speakers to names, use the actual names` : ''}
+- Format each speaker turn on its own line: "Person 1: their exact words"
+- Keep the original words verbatim — only add speaker labels and line breaks between turns
+- If it's clearly a single speaker (monologue), label everything under "Person 1:"
+- Do NOT add commentary, summaries, or analysis — only the labeled transcript
+${industry ? `\nMeeting context: ${industry} industry` : ''}`;
+
+    try {
+      const completion = await openai.chat.completions.create({
+        model,
+        max_tokens: 2000,
+        messages: [
+          { role: 'system', content: diarizePrompt },
+          { role: 'user', content: rawText },
+        ],
+      });
+      const diarized = completion.choices[0]?.message?.content || rawText;
+      res.json({ result: diarized });
+    } catch (diarizeErr) {
+      // If diarization fails, return raw transcript
+      console.error('[ai] diarization failed, returning raw:', diarizeErr);
+      res.json({ result: rawText });
+    }
   } catch (err) {
     console.error('[ai] transcribe error:', err);
     res.status(500).json({ error: 'Transcription failed' });

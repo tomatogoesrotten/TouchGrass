@@ -3,11 +3,12 @@ import { useSession } from '@/stores/session'
 
 export function useRecordingTimer() {
   const isRecording = useSession((s) => s.isRecording)
+  const isPaused = useSession((s) => s.isPaused)
   const setRecSeconds = useSession((s) => s.setRecSeconds)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
-    if (isRecording) {
+    if (isRecording && !isPaused) {
       intervalRef.current = setInterval(() => {
         useSession.setState((s) => ({ recSeconds: s.recSeconds + 1 }))
       }, 1000)
@@ -17,5 +18,5 @@ export function useRecordingTimer() {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current)
     }
-  }, [isRecording, setRecSeconds])
+  }, [isRecording, isPaused, setRecSeconds])
 }
