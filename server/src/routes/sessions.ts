@@ -14,8 +14,8 @@ router.get('/', async (_req, res) => {
       client: r.client,
       industry: r.industry,
       phase: r.phase,
-      date: r.date,
-      time: r.time,
+      date: formatDate(r.date),
+      time: formatTime(r.time),
       updatedAt: r.updated_at,
     }));
     res.json(sessions);
@@ -174,6 +174,21 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+function formatDate(val: unknown): string {
+  if (!val) return '';
+  const d = val instanceof Date ? val : new Date(String(val));
+  if (isNaN(d.getTime())) return String(val);
+  return d.toISOString().slice(0, 10); // "2026-03-21"
+}
+
+function formatTime(val: unknown): string {
+  if (!val) return '';
+  const str = String(val);
+  // PostgreSQL TIME comes as "HH:MM:SS.microseconds" — trim to HH:MM
+  const match = str.match(/^(\d{2}:\d{2})/);
+  return match ? match[1] : str;
+}
+
 function formatSession(row: Record<string, unknown>) {
   return {
     id: row.id,
@@ -181,8 +196,8 @@ function formatSession(row: Record<string, unknown>) {
     industry: row.industry,
     phase: row.phase,
     attendees: row.attendees,
-    date: row.date,
-    time: row.time,
+    date: formatDate(row.date),
+    time: formatTime(row.time),
     transcript: row.transcript,
     manualNotes: row.manual_notes,
     quickTags: row.quick_tags,

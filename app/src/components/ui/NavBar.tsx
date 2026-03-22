@@ -85,9 +85,12 @@ export function NavBar() {
             <Settings size={16} color={isDark ? '#a1a1aa' : '#52525b'} />
           </button>
           <ThemeToggle />
-          <PrimaryBtn className="px-4 py-2 h-9 text-[13px]" onClick={() => navigate('/setup')}>
+          <PrimaryBtn className="px-4 py-2 h-9 text-[13px] hidden sm:flex" onClick={() => navigate('/setup')}>
             <Plus size={15} strokeWidth={2.5} />
             New Session
+          </PrimaryBtn>
+          <PrimaryBtn className="w-9 h-9 p-0 flex sm:hidden items-center justify-center" onClick={() => navigate('/setup')}>
+            <Plus size={18} strokeWidth={2.5} />
           </PrimaryBtn>
         </div>
       </div>

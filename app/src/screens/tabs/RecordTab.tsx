@@ -56,6 +56,8 @@ export function RecordTab() {
   const [loadingAudio, setLoadingAudio] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const finalizedTextRef = useRef('')
+  const networkErrorShownRef = useRef(false)
+  const processedResultIndexRef = useRef(0)
 
   const textPrimary = isDark ? '#fafafa' : '#09090b'
   const textSoft = isDark ? '#a1a1aa' : '#52525b'
@@ -165,6 +167,8 @@ export function RecordTab() {
     }
 
     finalizedTextRef.current = useSession.getState().activeSession?.transcript ?? ''
+    networkErrorShownRef.current = false
+    processedResultIndexRef.current = 0
 
     const recognition = new SR()
     recognition.continuous = settings.speech_settings.continuous
@@ -172,30 +176,30 @@ export function RecordTab() {
     recognition.lang = settings.speech_settings.language
 
     recognition.onresult = (e: SpeechRecognitionEvent) => {
-      let finals = ''
       let interim = ''
 
-      for (let i = 0; i < e.results.length; i++) {
+      for (let i = e.resultIndex; i < e.results.length; i++) {
         const result = e.results[i]
         if (result.isFinal) {
-          finals += result[0].transcript
+          finalizedTextRef.current += result[0].transcript
         } else {
           interim += result[0].transcript
         }
       }
 
-      if (finals) {
-        finalizedTextRef.current = finalizedTextRef.current + finals
-      }
-
-      const display = finalizedTextRef.current + (interim ? interim : '')
+      const display = finalizedTextRef.current + interim
       updateActiveSession({ transcript: display })
     }
 
     recognition.onerror = (e: Event & { error: string }) => {
       if (e.error === 'no-speech' || e.error === 'aborted') return
       if (e.error === 'network') {
-        toast('No internet — recording audio only', 'error')
+        if (!networkErrorShownRef.current) {
+          networkErrorShownRef.current = true
+          toast('No internet — recording audio only', 'error')
+        }
+        // Stop restarting recognition on persistent network errors
+        activeRef.current = false
       } else if (e.error === 'not-allowed') {
         toast('Microphone access denied — check browser permissions', 'error')
         stopRecognition()

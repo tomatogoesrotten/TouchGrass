@@ -49,8 +49,8 @@ export function Dashboard() {
   const textMuted = isDark ? '#71717a' : '#a1a1aa'
   const border = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'
 
-  function handleOpenSession(session: typeof sessions[0]) {
-    loadFullSession(session.id)
+  async function handleOpenSession(session: typeof sessions[0]) {
+    await loadFullSession(session.id)
     navigate('/session')
   }
 

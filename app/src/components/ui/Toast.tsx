@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useTheme } from '@/stores/theme'
 import { useToast } from '@/stores/toast'
-import { Check, X } from 'lucide-react'
+import { Check, AlertTriangle } from 'lucide-react'
 
 export function Toast() {
   const { message, visible, type } = useToast()
@@ -15,7 +15,7 @@ export function Toast() {
   const iconBg = isError
     ? (isDark ? 'rgba(255,77,106,0.15)' : 'rgba(229,56,75,0.12)')
     : (isDark ? 'rgba(196,240,66,0.15)' : 'rgba(163,204,41,0.12)')
-  const Icon = isError ? X : Check
+  const Icon = isError ? AlertTriangle : Check
 
   return (
     <AnimatePresence>
