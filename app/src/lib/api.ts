@@ -22,6 +22,11 @@ export interface SessionMeta {
   updatedAt: string
 }
 
+export interface ChatMessage {
+  role: 'user' | 'assistant'
+  content: string
+}
+
 export interface SessionFull extends SessionMeta {
   attendees: string
   transcript: string
@@ -31,6 +36,8 @@ export interface SessionFull extends SessionMeta {
   aiQuestions: string
   privateSolutions: string
   aiSolutionFeedback: string
+  actionPlan: string
+  planChat: ChatMessage[]
   createdAt: string
 }
 
@@ -122,6 +129,18 @@ export const api = {
     request<{ result: string }>('/api/ai/transcribe', {
       method: 'POST',
       body: JSON.stringify({ audio, mimeType, sessionId }),
+    }),
+
+  aiPlan: (sessionId: string) =>
+    request<{ result: string }>('/api/ai/plan', {
+      method: 'POST',
+      body: JSON.stringify({ sessionId }),
+    }),
+
+  aiPlanChat: (sessionId: string, messages: ChatMessage[], currentPlan: string) =>
+    request<{ message: string; plan: string }>('/api/ai/plan/chat', {
+      method: 'POST',
+      body: JSON.stringify({ sessionId, messages, currentPlan }),
     }),
 
   getAnalyticsSummary: (range?: string) =>

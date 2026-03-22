@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { api } from '@/lib/api'
-import type { SessionFull, SessionMeta, QuickTag } from '@/lib/api'
+import type { SessionFull, SessionMeta, QuickTag, ChatMessage } from '@/lib/api'
 
 export type Phase = 'requirements' | 'follow-up' | 'demo' | 'troubleshoot'
 
@@ -19,6 +19,8 @@ export interface Session {
   aiQuestions: string
   privateSolutions: string
   aiSolutionFeedback: string
+  actionPlan: string
+  planChat: ChatMessage[]
   createdAt?: string
   updatedAt?: string
 }
@@ -69,6 +71,8 @@ function toSession(data: SessionFull): Session {
     aiQuestions: data.aiQuestions ?? '',
     privateSolutions: data.privateSolutions ?? '',
     aiSolutionFeedback: data.aiSolutionFeedback ?? '',
+    actionPlan: data.actionPlan ?? '',
+    planChat: data.planChat ?? [],
     createdAt: data.createdAt,
     updatedAt: data.updatedAt,
   }
@@ -155,6 +159,8 @@ export const useSession = create<SessionStore>((set, get) => ({
         aiQuestions: session.aiQuestions,
         privateSolutions: session.privateSolutions,
         aiSolutionFeedback: session.aiSolutionFeedback,
+        actionPlan: session.actionPlan,
+        planChat: session.planChat,
       } as Partial<Session>)
     } catch (err) {
       console.error('Auto-save failed:', err)

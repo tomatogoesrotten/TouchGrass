@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Share2 } from 'lucide-react'
+import { ArrowLeft, Share2, Sparkles } from 'lucide-react'
 import { useTheme } from '@/stores/theme'
 import { useSession } from '@/stores/session'
 import { useRecordingTimer } from '@/hooks/useRecordingTimer'
@@ -94,6 +94,18 @@ export function Session() {
               </div>
             )}
             <ThemeToggle />
+            <button
+              onClick={() => navigate('/session/plan')}
+              className="flex items-center gap-2 px-3.5 py-1.5 rounded-[10px] text-[13px] font-semibold transition-all hover:brightness-110"
+              style={{
+                backgroundColor: isDark ? 'rgba(196,240,66,0.1)' : 'rgba(163,204,41,0.1)',
+                color: 'var(--color-accent-dark)',
+                border: `1px solid ${isDark ? 'rgba(196,240,66,0.2)' : 'rgba(163,204,41,0.2)'}`,
+              }}
+            >
+              <Sparkles size={14} />
+              <span className="hidden sm:inline">Plan</span>
+            </button>
             <button
               onClick={() => setShowExport(true)}
               className="w-9 h-9 flex items-center justify-center rounded-[10px] transition-all hover:brightness-110"

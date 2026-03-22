@@ -50,6 +50,8 @@ export async function migrate() {
       created_at TIMESTAMPTZ DEFAULT NOW()
     );
   `);
+  await pool.query(`ALTER TABLE sessions ADD COLUMN IF NOT EXISTS action_plan TEXT DEFAULT '';`);
+  await pool.query(`ALTER TABLE sessions ADD COLUMN IF NOT EXISTS plan_chat JSONB DEFAULT '[]'::jsonb;`);
   console.log('[db] migration complete');
 }
 

@@ -6,6 +6,8 @@ import {
   questionsPrompt,
   domainPrompt,
   solutionsPrompt,
+  planPrompt,
+  planChatPrompt,
 } from '../prompts.js';
 import { getSetting } from './settings.js';
 
@@ -180,6 +182,106 @@ router.post('/solutions', async (req, res) => {
   } catch (err) {
     console.error('[ai] solutions error:', err);
     res.status(500).json({ error: 'AI request failed' });
+  }
+});
+
+router.post('/plan', async (req, res) => {
+  try {
+    const session = await getSession(req.body.sessionId);
+    if (!session) { res.status(404).json({ error: 'Session not found' }); return; }
+
+    let context = buildContext(session);
+    if (session.structured_notes) context += `\n\nSTRUCTURED NOTES:\n${session.structured_notes}`;
+    if (session.ai_questions) context += `\n\nAI QUESTIONS:\n${session.ai_questions}`;
+    if (session.private_solutions) context += `\n\nSOLUTION IDEAS:\n${session.private_solutions}`;
+    if (session.ai_solution_feedback) context += `\n\nSOLUTION FEEDBACK:\n${session.ai_solution_feedback}`;
+
+    if (!context.trim()) {
+      res.status(400).json({ error: 'No session data to generate a plan from' });
+      return;
+    }
+
+    const openai = getClient();
+    const model = await getModel();
+    const prompt = planPrompt(session.industry as string, session.phase as string);
+
+    const completion = await openai.chat.completions.create({
+      model,
+      max_tokens: 3000,
+      messages: [
+        { role: 'system', content: prompt },
+        { role: 'user', content: context },
+      ],
+    });
+
+    const result = completion.choices[0]?.message?.content ?? '';
+    await pool.query(
+      `UPDATE sessions SET action_plan = $1, plan_chat = '[]'::jsonb, updated_at = NOW() WHERE id = $2`,
+      [result, session.id]
+    );
+
+    res.json({ result });
+  } catch (err) {
+    console.error('[ai] plan error:', err);
+    res.status(500).json({ error: 'Plan generation failed' });
+  }
+});
+
+router.post('/plan/chat', async (req, res) => {
+  try {
+    const { sessionId, messages, currentPlan } = req.body;
+    if (!sessionId || !messages || !currentPlan) {
+      res.status(400).json({ error: 'sessionId, messages, and currentPlan are required' });
+      return;
+    }
+
+    const session = await getSession(sessionId);
+    if (!session) { res.status(404).json({ error: 'Session not found' }); return; }
+
+    let context = buildContext(session);
+    if (session.structured_notes) context += `\n\nSTRUCTURED NOTES:\n${session.structured_notes}`;
+
+    const openai = getClient();
+    const model = await getModel();
+    const systemPrompt = planChatPrompt(session.industry as string, currentPlan);
+
+    const chatMessages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
+      { role: 'system', content: systemPrompt + `\n\nMeeting context:\n${context}` },
+      ...messages.map((m: { role: string; content: string }) => ({
+        role: m.role as 'user' | 'assistant',
+        content: m.content,
+      })),
+    ];
+
+    const completion = await openai.chat.completions.create({
+      model,
+      max_tokens: 3000,
+      response_format: { type: 'json_object' },
+      messages: chatMessages,
+    });
+
+    const raw = completion.choices[0]?.message?.content ?? '{}';
+    let parsed: { plan?: string | null; message?: string };
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      parsed = { plan: null, message: raw };
+    }
+
+    const updatedPlan = parsed.plan || currentPlan;
+    const reply = parsed.message || 'Done.';
+
+    // Save updated plan and chat history
+    const allMessages = [...messages, { role: 'assistant', content: reply }];
+    await pool.query(
+      `UPDATE sessions SET action_plan = $1, plan_chat = $2::jsonb, updated_at = NOW() WHERE id = $3`,
+      [updatedPlan, JSON.stringify(allMessages), session.id]
+    );
+
+    res.json({ message: reply, plan: updatedPlan });
+  } catch (err) {
+    console.error('[ai] plan chat error:', err);
+    res.status(500).json({ error: 'Plan chat failed' });
   }
 });
 

@@ -66,6 +66,7 @@ router.patch('/:id', async (req, res) => {
       'transcript', 'manual_notes', 'quick_tags',
       'structured_notes', 'ai_questions',
       'private_solutions', 'ai_solution_feedback',
+      'action_plan', 'plan_chat',
     ];
     const camelToSnake: Record<string, string> = {
       manualNotes: 'manual_notes',
@@ -74,6 +75,8 @@ router.patch('/:id', async (req, res) => {
       aiQuestions: 'ai_questions',
       privateSolutions: 'private_solutions',
       aiSolutionFeedback: 'ai_solution_feedback',
+      actionPlan: 'action_plan',
+      planChat: 'plan_chat',
     };
 
     const sets: string[] = [];
@@ -83,12 +86,12 @@ router.patch('/:id', async (req, res) => {
     for (const [key, value] of Object.entries(req.body)) {
       const col = camelToSnake[key] ?? key;
       if (!allowed.includes(col)) continue;
-      if (col === 'quick_tags') {
+      if (col === 'quick_tags' || col === 'plan_chat') {
         sets.push(`${col} = $${idx}::jsonb`);
       } else {
         sets.push(`${col} = $${idx}`);
       }
-      values.push(col === 'quick_tags' ? JSON.stringify(value) : value);
+      values.push(col === 'quick_tags' || col === 'plan_chat' ? JSON.stringify(value) : value);
       idx++;
     }
 
@@ -247,6 +250,8 @@ function formatSession(row: Record<string, unknown>) {
     aiQuestions: row.ai_questions,
     privateSolutions: row.private_solutions,
     aiSolutionFeedback: row.ai_solution_feedback,
+    actionPlan: row.action_plan,
+    planChat: row.plan_chat,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
