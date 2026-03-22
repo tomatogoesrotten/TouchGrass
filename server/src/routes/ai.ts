@@ -183,4 +183,42 @@ router.post('/solutions', async (req, res) => {
   }
 });
 
+router.post('/transcribe', async (req, res) => {
+  try {
+    const { audio, mimeType, sessionId } = req.body;
+    if (!audio) {
+      res.status(400).json({ error: 'audio data is required' });
+      return;
+    }
+
+    const ext = mimeType?.includes('mp4') ? 'mp4'
+      : mimeType?.includes('ogg') ? 'ogg'
+      : 'webm';
+
+    const buffer = Buffer.from(audio, 'base64');
+    const file = new File([buffer], `recording.${ext}`, { type: mimeType || 'audio/webm' });
+
+    const openai = getClient();
+    const transcription = await openai.audio.transcriptions.create({
+      model: 'whisper-1',
+      file,
+    });
+
+    const result = transcription.text || '';
+
+    // Save transcript to session if sessionId provided
+    if (sessionId) {
+      await pool.query(
+        `UPDATE sessions SET transcript = $1, updated_at = NOW() WHERE id = $2`,
+        [result, sessionId]
+      );
+    }
+
+    res.json({ result });
+  } catch (err) {
+    console.error('[ai] transcribe error:', err);
+    res.status(500).json({ error: 'Transcription failed' });
+  }
+});
+
 export default router;

@@ -1,8 +1,7 @@
 import { useRef, useCallback, useEffect, useState } from 'react'
-import { X, Mic, Upload, Download, Loader2 } from 'lucide-react'
+import { X, Mic, Upload, Download, Loader2, FileText } from 'lucide-react'
 import { useTheme } from '@/stores/theme'
 import { useSession } from '@/stores/session'
-import { useSettings } from '@/stores/settings'
 import { useToast } from '@/stores/toast'
 import { api } from '@/lib/api'
 import { GlassCard } from '@/components/ui/GlassCard'
@@ -14,8 +13,6 @@ const quickTags = [
   { label: 'Action', emoji: '📌' },
   { label: 'Unclear', emoji: '🤔' },
 ]
-
-type SpeechRecognitionEvent = Event & { results: SpeechRecognitionResultList; resultIndex: number }
 
 function blobToBase64(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -44,20 +41,16 @@ export function RecordTab() {
     addTag, removeTag, updateActiveSession,
   } = useSession()
   const toast = useToast((s) => s.show)
-  const { settings } = useSettings()
-  const recognitionRef = useRef<InstanceType<typeof window.SpeechRecognition> | null>(null)
-  const activeRef = useRef(false)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([])
   const mimeTypeRef = useRef('audio/webm')
+  const lastBlobRef = useRef<Blob | null>(null)
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
   const [importing, setImporting] = useState(false)
   const [savingAudio, setSavingAudio] = useState(false)
   const [loadingAudio, setLoadingAudio] = useState(false)
+  const [transcribing, setTranscribing] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const finalizedTextRef = useRef('')
-  const networkErrorShownRef = useRef(false)
-  const processedResultIndexRef = useRef(0)
 
   const textPrimary = isDark ? '#fafafa' : '#09090b'
   const textSoft = isDark ? '#a1a1aa' : '#52525b'
@@ -76,23 +69,13 @@ export function RecordTab() {
     api.getAudio(activeSession.id)
       .then(({ audio, mimeType }) => {
         const blob = base64ToBlob(audio, mimeType)
+        lastBlobRef.current = blob
         setAudioUrl(URL.createObjectURL(blob))
         mimeTypeRef.current = mimeType
       })
       .catch(() => { /* no audio stored yet */ })
       .finally(() => setLoadingAudio(false))
   }, [activeSession?.id])
-
-  const stopRecognition = useCallback(() => {
-    activeRef.current = false
-    if (recognitionRef.current) {
-      recognitionRef.current.onend = null
-      recognitionRef.current.onresult = null
-      recognitionRef.current.onerror = null
-      try { recognitionRef.current.stop() } catch { /* already stopped */ }
-      recognitionRef.current = null
-    }
-  }, [])
 
   const stopMediaRecorder = useCallback(() => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
@@ -101,11 +84,8 @@ export function RecordTab() {
   }, [])
 
   useEffect(() => {
-    return () => {
-      stopRecognition()
-      stopMediaRecorder()
-    }
-  }, [stopRecognition, stopMediaRecorder])
+    return () => { stopMediaRecorder() }
+  }, [stopMediaRecorder])
 
   async function persistAudio(blob: Blob) {
     if (!activeSession?.id) return
@@ -120,27 +100,20 @@ export function RecordTab() {
     }
   }
 
-  function startMediaRecorder() {
-    navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
-      audioChunksRef.current = []
-      const mime = getSupportedMimeType()
-      mimeTypeRef.current = mime
-      const recorder = new MediaRecorder(stream, { mimeType: mime })
-      recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) audioChunksRef.current.push(e.data)
-      }
-      recorder.onstop = () => {
-        const blob = new Blob(audioChunksRef.current, { type: recorder.mimeType })
-        const url = URL.createObjectURL(blob)
-        setAudioUrl(url)
-        stream.getTracks().forEach((t) => t.stop())
-        persistAudio(blob)
-      }
-      recorder.start(1000)
-      mediaRecorderRef.current = recorder
-    }).catch(() => {
-      // Mic already captured by SpeechRecognition; non-fatal
-    })
+  async function transcribeBlob(blob: Blob) {
+    if (!activeSession?.id) return
+    setTranscribing(true)
+    try {
+      const base64 = await blobToBase64(blob)
+      const { result } = await api.transcribeAudio(base64, blob.type, activeSession.id)
+      updateActiveSession({ transcript: result })
+      toast('Transcription complete', 'success')
+    } catch (err) {
+      console.error('Transcription failed:', err)
+      toast('Transcription failed — check your OpenAI API key', 'error')
+    } finally {
+      setTranscribing(false)
+    }
   }
 
   function getSupportedMimeType() {
@@ -153,76 +126,37 @@ export function RecordTab() {
 
   function toggleRecording() {
     if (isRecording) {
-      stopRecognition()
       stopMediaRecorder()
       setRecording(false)
       toast('Recording saved')
       return
     }
 
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition
-    if (!SR) {
-      toast('Speech recognition not available — use Chrome or Edge', 'error')
-      return
-    }
-
-    finalizedTextRef.current = useSession.getState().activeSession?.transcript ?? ''
-    networkErrorShownRef.current = false
-    processedResultIndexRef.current = 0
-
-    const recognition = new SR()
-    recognition.continuous = settings.speech_settings.continuous
-    recognition.interimResults = true
-    recognition.lang = settings.speech_settings.language
-
-    recognition.onresult = (e: SpeechRecognitionEvent) => {
-      let interim = ''
-
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        const result = e.results[i]
-        if (result.isFinal) {
-          finalizedTextRef.current += result[0].transcript
-        } else {
-          interim += result[0].transcript
-        }
+    navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
+      audioChunksRef.current = []
+      const mime = getSupportedMimeType()
+      mimeTypeRef.current = mime
+      const recorder = new MediaRecorder(stream, { mimeType: mime })
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data)
       }
-
-      const display = finalizedTextRef.current + interim
-      updateActiveSession({ transcript: display })
-    }
-
-    recognition.onerror = (e: Event & { error: string }) => {
-      if (e.error === 'no-speech' || e.error === 'aborted') return
-      if (e.error === 'network') {
-        if (!networkErrorShownRef.current) {
-          networkErrorShownRef.current = true
-          toast('No internet — recording audio only', 'error')
-        }
-        // Stop restarting recognition on persistent network errors
-        activeRef.current = false
-      } else if (e.error === 'not-allowed') {
-        toast('Microphone access denied — check browser permissions', 'error')
-        stopRecognition()
-        stopMediaRecorder()
-        setRecording(false)
-      } else {
-        toast(`Recognition error: ${e.error}`, 'error')
+      recorder.onstop = () => {
+        const blob = new Blob(audioChunksRef.current, { type: recorder.mimeType })
+        const url = URL.createObjectURL(blob)
+        setAudioUrl(url)
+        lastBlobRef.current = blob
+        stream.getTracks().forEach((t) => t.stop())
+        persistAudio(blob)
+        transcribeBlob(blob)
       }
-    }
-
-    recognition.onend = () => {
-      if (activeRef.current) {
-        try { recognition.start() } catch { /* already started */ }
-      }
-    }
-
-    recognitionRef.current = recognition
-    activeRef.current = true
-    setAudioUrl(null)
-    recognition.start()
-    startMediaRecorder()
-    setRecSeconds(0)
-    setRecording(true)
+      recorder.start(1000)
+      mediaRecorderRef.current = recorder
+      setAudioUrl(null)
+      setRecSeconds(0)
+      setRecording(true)
+    }).catch(() => {
+      toast('Microphone access denied — check browser permissions', 'error')
+    })
   }
 
   function handleAddTag(label: string, emoji: string) {
@@ -244,6 +178,7 @@ export function RecordTab() {
     try {
       const url = URL.createObjectURL(file)
       setAudioUrl(url)
+      lastBlobRef.current = file
       mimeTypeRef.current = file.type || 'audio/mpeg'
       toast(`Imported: ${file.name}`)
 
@@ -256,6 +191,12 @@ export function RecordTab() {
       toast('Failed to import audio file', 'error')
     } finally {
       setImporting(false)
+    }
+  }
+
+  function handleRetranscribe() {
+    if (lastBlobRef.current) {
+      transcribeBlob(lastBlobRef.current)
     }
   }
 
@@ -310,7 +251,8 @@ export function RecordTab() {
         <div className="flex flex-col items-center justify-center gap-5 py-4">
           <button
             onClick={toggleRecording}
-            className="group relative px-8 py-4 rounded-[100px] font-bold text-[15px] flex items-center gap-3 transition-all active:scale-[0.97] record-pulse"
+            disabled={transcribing}
+            className="group relative px-8 py-4 rounded-[100px] font-bold text-[15px] flex items-center gap-3 transition-all active:scale-[0.97] record-pulse disabled:opacity-60"
             style={{
               backgroundColor: isRecording ? dangerColor : 'var(--color-accent-dark)',
               color: isRecording ? '#ffffff' : '#000000',
@@ -331,9 +273,10 @@ export function RecordTab() {
               </>
             )}
           </button>
-          {savingAudio && (
+          {(savingAudio || transcribing) && (
             <div className="flex items-center gap-2 text-[11px] font-medium" style={{ color: textMuted }}>
-              <Loader2 size={12} className="animate-spin" /> Saving audio...
+              <Loader2 size={12} className="animate-spin" />
+              {transcribing ? 'Transcribing audio...' : 'Saving audio...'}
             </div>
           )}
         </div>
@@ -422,20 +365,43 @@ export function RecordTab() {
 
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-[15px] font-bold" style={{ color: textPrimary }}>Live Transcript</h2>
-            <span
-              className="text-[11px] font-medium px-2.5 py-1 rounded-[8px]"
-              style={{ backgroundColor: isDark ? 'rgba(196,240,66,0.12)' : 'rgba(163,204,41,0.12)', color: 'var(--color-accent-dark)' }}
-            >
-              {isRecording ? 'Listening...' : transcript ? 'Captured' : 'Ready'}
-            </span>
+            <h2 className="text-[15px] font-bold" style={{ color: textPrimary }}>Transcript</h2>
+            <div className="flex items-center gap-2">
+              {audioUrl && !isRecording && !transcribing && (
+                <button
+                  className="flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-[8px] transition-all hover:brightness-110"
+                  style={{
+                    backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
+                    color: textSoft,
+                    border: `1px solid ${border}`,
+                  }}
+                  onClick={handleRetranscribe}
+                  title="Re-transcribe audio"
+                >
+                  <FileText size={11} />
+                  Transcribe
+                </button>
+              )}
+              <span
+                className="text-[11px] font-medium px-2.5 py-1 rounded-[8px]"
+                style={{ backgroundColor: isDark ? 'rgba(196,240,66,0.12)' : 'rgba(163,204,41,0.12)', color: 'var(--color-accent-dark)' }}
+              >
+                {transcribing ? 'Transcribing...' : isRecording ? 'Recording...' : transcript ? 'Captured' : 'Ready'}
+              </span>
+            </div>
           </div>
           <div className="min-h-[200px] p-5 overflow-y-auto rounded-[16px]" style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)', border: `1px solid ${border}` }}>
-            {transcript ? (
+            {transcribing ? (
+              <div className="flex flex-col items-center justify-center gap-3 py-8">
+                <Loader2 size={20} className="animate-spin" color={accent} />
+                <p className="text-sm font-medium" style={{ color: textSoft }}>Transcribing your recording...</p>
+                <p className="text-xs" style={{ color: textMuted }}>This may take a moment</p>
+              </div>
+            ) : transcript ? (
               <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: textSoft }}>{transcript}</p>
             ) : (
               <p className="text-sm italic" style={{ color: textMuted }}>
-                {isRecording ? 'Listening for speech...' : 'Start recording to capture transcript.'}
+                {isRecording ? 'Transcript will appear after recording stops.' : 'Start recording to capture transcript.'}
               </p>
             )}
           </div>

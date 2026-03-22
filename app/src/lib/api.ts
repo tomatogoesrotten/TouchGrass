@@ -106,6 +106,12 @@ export const api = {
   getAudio: (id: string) =>
     request<{ audio: string; mimeType: string }>(`/api/sessions/${id}/audio`),
 
+  transcribeAudio: (audio: string, mimeType: string, sessionId?: string) =>
+    request<{ result: string }>('/api/ai/transcribe', {
+      method: 'POST',
+      body: JSON.stringify({ audio, mimeType, sessionId }),
+    }),
+
   getAnalyticsSummary: (range?: string) =>
     request<AnalyticsSummary>(`/api/analytics/summary${range ? `?range=${range}` : ''}`),
 
